@@ -1,6 +1,7 @@
 package main
 
 import (
+	"html/template"
 	"log"
 	"net/http"
 	"os"
@@ -10,12 +11,10 @@ import (
 	"github.com/gorilla/sessions"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
-)
 
-var (
-	db          *DB
-	store       *sessions.CookieStore
-	oauthConfig *oauth2.Config
+	"tempus/internal/auth"
+	"tempus/internal/db"
+	"tempus/internal/handlers"
 )
 
 func main() {
@@ -23,7 +22,7 @@ func main() {
 	dbPath := getEnv("DATABASE_PATH", "tempus.db")
 	port := getEnv("PORT", "8080")
 
-	oauthConfig = &oauth2.Config{
+	oauthConfig := &oauth2.Config{
 		ClientID:     requireEnv("GOOGLE_CLIENT_ID"),
 		ClientSecret: requireEnv("GOOGLE_CLIENT_SECRET"),
 		RedirectURL:  getEnv("GOOGLE_REDIRECT_URL", "http://localhost:8080/auth/callback"),
@@ -31,7 +30,7 @@ func main() {
 		Endpoint:     google.Endpoint,
 	}
 
-	store = sessions.NewCookieStore([]byte(sessionSecret))
+	store := sessions.NewCookieStore([]byte(sessionSecret))
 	store.Options = &sessions.Options{
 		Path:     "/",
 		MaxAge:   86400 * 30,
@@ -39,30 +38,42 @@ func main() {
 		SameSite: http.SameSiteLaxMode,
 	}
 
-	var err error
-	db, err = initDB(dbPath)
+	database, err := db.InitDB(dbPath)
 	if err != nil {
 		log.Fatalf("failed to init database: %v", err)
 	}
-	defer db.close()
+	defer database.Close()
+
+	tmpl := template.Must(template.ParseGlob("templates/*.html"))
+
+	authH := &auth.Handler{
+		DB:     database,
+		Store:  store,
+		Config: oauthConfig,
+		Tmpl:   tmpl,
+	}
+	pageH := &handlers.Handler{
+		DB:   database,
+		Tmpl: tmpl,
+	}
 
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
 	// Public
-	r.Get("/login", handleLogin)
-	r.Get("/auth/google", handleGoogleAuth)
-	r.Get("/auth/callback", handleGoogleCallback)
-	r.Get("/logout", handleLogout)
+	r.Get("/login", authH.Login)
+	r.Get("/auth/google", authH.GoogleAuth)
+	r.Get("/auth/callback", authH.GoogleCallback)
+	r.Get("/logout", authH.Logout)
 
 	// Protected
 	r.Group(func(r chi.Router) {
-		r.Use(authMiddleware)
-		r.Get("/", handleIndex)
-		r.Get("/day/{date}", handleDay)
-		r.Post("/day/{date}/save", handleSaveDay)
-		r.Get("/export/week", handleExportWeek)
+		r.Use(authH.Middleware)
+		r.Get("/", pageH.Index)
+		r.Get("/day/{date}", pageH.Day)
+		r.Post("/day/{date}/save", pageH.SaveDay)
+		r.Get("/export/week", pageH.ExportWeek)
 	})
 
 	log.Printf("Server running at http://localhost:%s", port)

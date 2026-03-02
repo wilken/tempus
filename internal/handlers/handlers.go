@@ -1,4 +1,4 @@
-package main
+package handlers
 
 import (
 	"fmt"
@@ -10,22 +10,25 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/xuri/excelize/v2"
+
+	"tempus/internal/auth"
+	"tempus/internal/db"
 )
 
-var tmpl *template.Template
-
-func init() {
-	tmpl = template.Must(template.ParseGlob("templates/*.html"))
+// Handler holds handler dependencies and exposes HTTP handlers.
+type Handler struct {
+	DB   *db.DB
+	Tmpl *template.Template
 }
 
-func renderTemplate(w http.ResponseWriter, name string, data interface{}) {
+func (h *Handler) renderTemplate(w http.ResponseWriter, name string, data interface{}) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	if err := tmpl.ExecuteTemplate(w, name, data); err != nil {
+	if err := h.Tmpl.ExecuteTemplate(w, name, data); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
 
-func handleIndex(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/day/"+time.Now().Format("2006-01-02"), http.StatusFound)
 }
 
@@ -36,11 +39,11 @@ type DayPageData struct {
 	PrevDate      string
 	NextDate      string
 	UserName      string
-	Entries       []TimeEntry
+	Entries       []db.TimeEntry
 	TotalHours    float64
 }
 
-func handleDay(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) Day(w http.ResponseWriter, r *http.Request) {
 	dateStr := chi.URLParam(r, "date")
 	date, err := time.Parse("2006-01-02", dateStr)
 	if err != nil {
@@ -48,10 +51,10 @@ func handleDay(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID := r.Context().Value(ctxUserID).(string)
-	userName, _ := r.Context().Value(ctxUserName).(string)
+	userID := r.Context().Value(auth.CtxUserID).(string)
+	userName, _ := r.Context().Value(auth.CtxUserName).(string)
 
-	entries, err := db.getEntriesForDay(userID, dateStr)
+	entries, err := h.DB.GetEntriesForDay(userID, dateStr)
 	if err != nil {
 		http.Error(w, "database error", http.StatusInternalServerError)
 		return
@@ -62,7 +65,7 @@ func handleDay(w http.ResponseWriter, r *http.Request) {
 		total += e.Hours
 	}
 
-	renderTemplate(w, "day.html", DayPageData{
+	h.renderTemplate(w, "day.html", DayPageData{
 		Date:          dateStr,
 		DateFormatted: date.Format("Monday, January 2, 2006"),
 		PrevDate:      date.AddDate(0, 0, -1).Format("2006-01-02"),
@@ -73,7 +76,7 @@ func handleDay(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func handleSaveDay(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) SaveDay(w http.ResponseWriter, r *http.Request) {
 	dateStr := chi.URLParam(r, "date")
 	if _, err := time.Parse("2006-01-02", dateStr); err != nil {
 		http.Error(w, "invalid date", http.StatusBadRequest)
@@ -84,12 +87,12 @@ func handleSaveDay(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID := r.Context().Value(ctxUserID).(string)
+	userID := r.Context().Value(auth.CtxUserID).(string)
 	tasks := r.Form["task"]
 	subtasks := r.Form["subtask"]
 	hoursStrs := r.Form["hours"]
 
-	var entries []TimeEntry
+	var entries []db.TimeEntry
 	for i, task := range tasks {
 		task = strings.TrimSpace(task)
 		if task == "" {
@@ -106,7 +109,7 @@ func handleSaveDay(w http.ResponseWriter, r *http.Request) {
 		if hours <= 0 {
 			continue
 		}
-		entries = append(entries, TimeEntry{
+		entries = append(entries, db.TimeEntry{
 			UserID:  userID,
 			Date:    dateStr,
 			Task:    task,
@@ -115,14 +118,14 @@ func handleSaveDay(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	if err := db.replaceEntriesForDay(userID, dateStr, entries); err != nil {
+	if err := h.DB.ReplaceEntriesForDay(userID, dateStr, entries); err != nil {
 		http.Error(w, "database error", http.StatusInternalServerError)
 		return
 	}
 	http.Redirect(w, r, "/day/"+dateStr, http.StatusSeeOther)
 }
 
-func handleExportWeek(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) ExportWeek(w http.ResponseWriter, r *http.Request) {
 	dateStr := r.URL.Query().Get("date")
 	if dateStr == "" {
 		dateStr = time.Now().Format("2006-01-02")
@@ -141,10 +144,10 @@ func handleExportWeek(w http.ResponseWriter, r *http.Request) {
 	monday := date.AddDate(0, 0, -(weekday - 1))
 	sunday := monday.AddDate(0, 0, 6)
 
-	userID := r.Context().Value(ctxUserID).(string)
-	userName, _ := r.Context().Value(ctxUserName).(string)
+	userID := r.Context().Value(auth.CtxUserID).(string)
+	userName, _ := r.Context().Value(auth.CtxUserName).(string)
 
-	entries, err := db.getEntriesForWeek(
+	entries, err := h.DB.GetEntriesForWeek(
 		userID,
 		monday.Format("2006-01-02"),
 		sunday.Format("2006-01-02"),
@@ -162,7 +165,7 @@ func handleExportWeek(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func buildExcel(entries []TimeEntry, monday, sunday time.Time, userName string) (*excelize.File, string) {
+func buildExcel(entries []db.TimeEntry, monday, sunday time.Time, userName string) (*excelize.File, string) {
 	f := excelize.NewFile()
 	sheet := "Week"
 	f.NewSheet(sheet)

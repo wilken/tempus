@@ -13,24 +13,24 @@
 
 - **Save strategy:** Replace-all for a day — on POST `/day/{date}/save`, all existing entries for that user+date are deleted and the submitted rows are inserted in a single transaction. Simplest possible approach.
 - **No CGo:** `modernc.org/sqlite` was chosen specifically to avoid CGo dependencies, making cross-compilation easy.
-- **Flat package structure:** All Go files live in `package main` (no sub-packages) because the app is small.
-- **Context keys:** Typed `contextKey` string aliases (`ctxUserID`, `ctxUserName`) are used to avoid collisions.
+- **Standard Go layout:** `cmd/` for the entry point; `internal/` sub-packages for domain logic. Dependencies injected via struct fields — no global variables.
+- **Context keys:** `auth.ContextKey` exported string type; constants `auth.CtxUserID` / `auth.CtxUserName` set by middleware and read by handlers without circular imports.
 
 ## Key files
 
-| File             | Purpose                                      |
-|------------------|----------------------------------------------|
-| `main.go`        | Server setup, routes, config from env vars   |
-| `db.go`          | SQLite schema + CRUD helpers                 |
-| `auth.go`        | Google OAuth flow, session middleware        |
-| `handlers.go`    | HTTP handlers + Excel builder                |
-| `templates/`     | HTML templates (login.html, day.html)        |
+| File                           | Purpose                                           |
+|--------------------------------|---------------------------------------------------|
+| `cmd/main.go`                  | Server setup, routes, config from env vars        |
+| `internal/db/db.go`            | SQLite schema, DB/User/TimeEntry types, CRUD      |
+| `internal/auth/auth.go`        | Google OAuth flow, session middleware, context keys |
+| `internal/handlers/handlers.go`| HTTP handlers + Excel builder                     |
+| `templates/`                   | HTML templates (login.html, day.html)             |
 
 ## Running
 
 ```bash
 source .env   # set GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, SESSION_SECRET
-go run .
+go run ./cmd
 ```
 
 ## Schema

@@ -1,4 +1,4 @@
-package main
+package db
 
 import (
 	"database/sql"
@@ -29,7 +29,7 @@ type TimeEntry struct {
 	Hours   float64
 }
 
-func initDB(path string) (*DB, error) {
+func InitDB(path string) (*DB, error) {
 	conn, err := sql.Open("sqlite", path)
 	if err != nil {
 		return nil, err
@@ -60,11 +60,11 @@ func initDB(path string) (*DB, error) {
 	return &DB{conn: conn}, nil
 }
 
-func (db *DB) close() error {
+func (db *DB) Close() error {
 	return db.conn.Close()
 }
 
-func (db *DB) upsertUser(u User) error {
+func (db *DB) UpsertUser(u User) error {
 	_, err := db.conn.Exec(`
 		INSERT INTO users (id, email, name) VALUES (?, ?, ?)
 		ON CONFLICT(id) DO UPDATE SET name=excluded.name, email=excluded.email`,
@@ -72,7 +72,7 @@ func (db *DB) upsertUser(u User) error {
 	return err
 }
 
-func (db *DB) getEntriesForDay(userID, date string) ([]TimeEntry, error) {
+func (db *DB) GetEntriesForDay(userID, date string) ([]TimeEntry, error) {
 	rows, err := db.conn.Query(`
 		SELECT id, user_id, date, task, subtask, hours
 		FROM time_entries
@@ -85,7 +85,7 @@ func (db *DB) getEntriesForDay(userID, date string) ([]TimeEntry, error) {
 	return scanEntries(rows)
 }
 
-func (db *DB) getEntriesForWeek(userID, startDate, endDate string) ([]TimeEntry, error) {
+func (db *DB) GetEntriesForWeek(userID, startDate, endDate string) ([]TimeEntry, error) {
 	rows, err := db.conn.Query(`
 		SELECT id, user_id, date, task, subtask, hours
 		FROM time_entries
@@ -98,8 +98,8 @@ func (db *DB) getEntriesForWeek(userID, startDate, endDate string) ([]TimeEntry,
 	return scanEntries(rows)
 }
 
-// replaceEntriesForDay deletes all entries for the day then inserts the new set.
-func (db *DB) replaceEntriesForDay(userID, date string, entries []TimeEntry) error {
+// ReplaceEntriesForDay deletes all entries for the day then inserts the new set.
+func (db *DB) ReplaceEntriesForDay(userID, date string, entries []TimeEntry) error {
 	tx, err := db.conn.Begin()
 	if err != nil {
 		return err
