@@ -123,6 +123,54 @@ func (db *DB) ReplaceEntriesForDay(userID, date string, entries []TimeEntry) err
 	return tx.Commit()
 }
 
+// GetRecentTasks returns distinct task names used by the user on or after since.
+func (db *DB) GetRecentTasks(userID, since string) ([]string, error) {
+	rows, err := db.conn.Query(`
+		SELECT task FROM time_entries
+		WHERE user_id = ? AND date >= ? AND task != ''
+		GROUP BY task
+		ORDER BY MAX(date) DESC, MAX(created_at) DESC`, userID, since)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	return scanStrings(rows)
+}
+
+// GetRecentSubtasksByTask returns distinct subtasks grouped by task used on or after since.
+func (db *DB) GetRecentSubtasksByTask(userID, since string) (map[string][]string, error) {
+	rows, err := db.conn.Query(`
+		SELECT task, subtask FROM time_entries
+		WHERE user_id = ? AND date >= ? AND subtask != ''
+		GROUP BY task, subtask
+		ORDER BY task, MAX(date) DESC, MAX(created_at) DESC`, userID, since)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	result := map[string][]string{}
+	for rows.Next() {
+		var task, subtask string
+		if err := rows.Scan(&task, &subtask); err != nil {
+			return nil, err
+		}
+		result[task] = append(result[task], subtask)
+	}
+	return result, rows.Err()
+}
+
+func scanStrings(rows *sql.Rows) ([]string, error) {
+	var out []string
+	for rows.Next() {
+		var s string
+		if err := rows.Scan(&s); err != nil {
+			return nil, err
+		}
+		out = append(out, s)
+	}
+	return out, rows.Err()
+}
+
 func scanEntries(rows *sql.Rows) ([]TimeEntry, error) {
 	var entries []TimeEntry
 	for rows.Next() {

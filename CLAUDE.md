@@ -12,26 +12,38 @@
 ## Architecture decisions
 
 - **Save strategy:** Replace-all for a day — on POST `/day/{date}/save`, all existing entries for that user+date are deleted and the submitted rows are inserted in a single transaction. Simplest possible approach.
+- **Auto-save:** The day page saves automatically via `fetch` (no page reload) when the user tabs out of the hours field or deletes a row. There is no manual save button.
 - **No CGo:** `modernc.org/sqlite` was chosen specifically to avoid CGo dependencies, making cross-compilation easy.
 - **Standard Go layout:** `cmd/` for the entry point; `internal/` sub-packages for domain logic. Dependencies injected via struct fields — no global variables.
 - **Context keys:** `auth.ContextKey` exported string type; constants `auth.CtxUserID` / `auth.CtxUserName` set by middleware and read by handlers without circular imports.
 
 ## Key files
 
-| File                           | Purpose                                           |
-|--------------------------------|---------------------------------------------------|
-| `cmd/main.go`                  | Server setup, routes, config from env vars        |
-| `internal/db/db.go`            | SQLite schema, DB/User/TimeEntry types, CRUD      |
-| `internal/auth/auth.go`        | Google OAuth flow, session middleware, context keys |
-| `internal/handlers/handlers.go`| HTTP handlers + Excel builder                     |
-| `templates/`                   | HTML templates (login.html, day.html)             |
+| File                              | Purpose                                                  |
+|-----------------------------------|----------------------------------------------------------|
+| `cmd/main.go`                     | Server setup, routes, config from env vars               |
+| `internal/db/db.go`               | SQLite schema, DB/User/TimeEntry types, CRUD             |
+| `internal/auth/auth.go`           | Google OAuth flow, session middleware, context keys      |
+| `internal/handlers/handlers.go`   | HTTP handlers + Excel builder                            |
+| `templates/`                      | HTML templates (login.html, day.html)                    |
+| `internal/db/db_test.go`          | DB layer tests (in-memory SQLite)                        |
+| `internal/auth/auth_test.go`      | Auth middleware and login handler tests                  |
+| `internal/handlers/handlers_test.go` | Handler tests (httptest + chi + in-memory DB)         |
 
 ## Running
 
 ```bash
-source .env   # set GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, SESSION_SECRET
+source .env   # exports GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, SESSION_SECRET (use export VAR=value in .env)
 go run ./cmd
 ```
+
+## Testing
+
+```bash
+go test ./...
+```
+
+Uses in-memory SQLite — no external dependencies required.
 
 ## Schema
 
@@ -45,3 +57,11 @@ Date is stored as `YYYY-MM-DD` text.
 ## Week export
 
 Monday–Sunday. Entries are grouped by day with daily totals and a week total row at the bottom. File name: `tempus-week-YYYY-MM-DD.xlsx` (Monday date).
+
+## Day page UX
+
+- Tab out of the hours field auto-saves and adds a new row (last row only).
+- Deleting a row auto-saves immediately.
+- Task and subtask fields show autocomplete suggestions from the 5 days prior to the viewed date, plus anything entered earlier in the current session.
+- Subtask suggestions are filtered to match the task in the same row.
+- A toast notification confirms saves and shows errors if the connection is lost.

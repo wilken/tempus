@@ -158,20 +158,23 @@
       padding: 8px 0;
     }
     .btn-export:hover { text-decoration: underline; }
-    .btn-save {
-      padding: 10px 28px;
-      background: #4285F4;
-      color: white;
-      border: none;
+    /* Toast notification */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      padding: 10px 16px;
       border-radius: 6px;
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 500;
-      cursor: pointer;
-      font-family: inherit;
-      transition: background 0.15s;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
     }
-    .btn-save:hover { background: #1a73e8; }
-    .btn-save:active { background: #1557b0; }
+    #toast.show { opacity: 1; pointer-events: auto; }
+    #toast.ok   { background: #e6f4ea; color: #1e6e2e; border: 1px solid #81c995; }
+    #toast.err  { background: #fce8e6; color: #c62828; border: 1px solid #e57373; }
   </style>
 </head>
 <body>
@@ -189,6 +192,7 @@
     <a class="nav-btn" href="/day/{{.NextDate}}">Next &#8594;</a>
   </div>
 
+  <div id="toast"></div>
   <div class="container">
     <form method="POST" action="/day/{{.Date}}/save" id="day-form">
       <div class="card">
@@ -201,11 +205,15 @@
               <th></th>
             </tr>
           </thead>
+          <datalist id="task-list">
+            {{range .TaskSuggestions}}<option value="{{.}}">{{end}}
+          </datalist>
+          <datalist id="subtask-list"></datalist>
           <tbody id="entries">
             {{range .Entries}}
             <tr>
-              <td><input type="text" name="task" value="{{.Task}}" placeholder="Task name"></td>
-              <td><input type="text" name="subtask" value="{{.Subtask}}" placeholder="Subtask (optional)"></td>
+              <td><input type="text" name="task" value="{{.Task}}" placeholder="Task name" list="task-list" oninput="updateSubtaskSuggestions(this.closest('tr'))"></td>
+              <td><input type="text" name="subtask" value="{{.Subtask}}" placeholder="Subtask (optional)" list="subtask-list" onfocus="updateSubtaskSuggestions(this.closest('tr'))"></td>
               <td class="col-hours"><input type="number" name="hours" value="{{.Hours}}" min="0.25" max="24" step="0.25" placeholder="0" onkeydown="hoursTab(event)"></td>
               <td><button type="button" class="btn-delete" tabindex="-1" onclick="deleteRow(this)" title="Remove row">&#215;</button></td>
             </tr>
@@ -222,18 +230,31 @@
         <a class="btn-export" href="/export/week?date={{.Date}}">
           &#8659; Export week to Excel
         </a>
-        <button type="submit" class="btn-save">Save</button>
       </div>
     </form>
   </div>
 
   <script>
+    const subtasksByTask = {{.SubtasksByTask}};
+
+    function updateSubtaskSuggestions(row) {
+      const task = row.querySelector('input[name="task"]').value;
+      const subtasks = subtasksByTask[task] || [];
+      const datalist = document.getElementById('subtask-list');
+      datalist.innerHTML = '';
+      subtasks.forEach(function(s) {
+        const opt = document.createElement('option');
+        opt.value = s;
+        datalist.appendChild(opt);
+      });
+    }
+
     function addRow() {
       const tbody = document.getElementById('entries');
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td><input type="text" name="task" placeholder="Task name"></td>
-        <td><input type="text" name="subtask" placeholder="Subtask (optional)"></td>
+        <td><input type="text" name="task" placeholder="Task name" list="task-list" oninput="updateSubtaskSuggestions(this.closest('tr'))"></td>
+        <td><input type="text" name="subtask" placeholder="Subtask (optional)" list="subtask-list" onfocus="updateSubtaskSuggestions(this.closest('tr'))"></td>
         <td class="col-hours"><input type="number" name="hours" min="0.25" max="24" step="0.25" placeholder="0" onkeydown="hoursTab(event)"></td>
         <td><button type="button" class="btn-delete" tabindex="-1" onclick="deleteRow(this)" title="Remove row">&#215;</button></td>
       `;
@@ -260,20 +281,60 @@
       if (e.target.name === 'hours') updateTotal();
     });
 
-    function saveForm() {
+    let toastTimer;
+    function showToast(msg, type) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = 'show ' + type;
+      clearTimeout(toastTimer);
+      if (type === 'ok') toastTimer = setTimeout(() => t.className = '', 2000);
+    }
+
+    async function saveForm() {
       const form = document.getElementById('day-form');
-      fetch(form.action, {
-        method: 'POST',
-        body: new URLSearchParams(new FormData(form)),
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        redirect: 'manual'
-      });
+      try {
+        const resp = await fetch(form.action, {
+          method: 'POST',
+          body: new URLSearchParams(new FormData(form)),
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          redirect: 'manual'
+        });
+        // redirect: 'manual' makes a 303 come back as opaqueredirect (status 0)
+        if (resp.ok || resp.type === 'opaqueredirect') {
+          showToast('Saved', 'ok');
+        } else {
+          showToast('Server error — changes may not be saved', 'err');
+        }
+      } catch {
+        showToast('Connection lost — changes not saved', 'err');
+      }
+    }
+
+    function learnFromRow(row) {
+      const task = row.querySelector('input[name="task"]').value.trim();
+      const subtask = row.querySelector('input[name="subtask"]').value.trim();
+      if (!task) return;
+      // Add task to datalist if not already present.
+      const taskList = document.getElementById('task-list');
+      if (!Array.from(taskList.options).some(o => o.value === task)) {
+        const opt = document.createElement('option');
+        opt.value = task;
+        taskList.insertBefore(opt, taskList.firstChild);
+      }
+      // Add subtask to the map if not already present.
+      if (subtask) {
+        if (!subtasksByTask[task]) subtasksByTask[task] = [];
+        if (!subtasksByTask[task].includes(subtask)) {
+          subtasksByTask[task].unshift(subtask);
+        }
+      }
     }
 
     function hoursTab(e) {
       if (e.key !== 'Tab' || e.shiftKey) return;
       const rows = document.querySelectorAll('#entries tr');
       const isLastRow = e.target.closest('tr') === rows[rows.length - 1];
+      learnFromRow(e.target.closest('tr'));
       saveForm();
       if (isLastRow) {
         e.preventDefault();

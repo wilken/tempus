@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -34,13 +35,15 @@ func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 
 // DayPageData is the view model for the day page.
 type DayPageData struct {
-	Date          string
-	DateFormatted string
-	PrevDate      string
-	NextDate      string
-	UserName      string
-	Entries       []db.TimeEntry
-	TotalHours    float64
+	Date              string
+	DateFormatted     string
+	PrevDate          string
+	NextDate          string
+	UserName          string
+	Entries           []db.TimeEntry
+	TotalHours        float64
+	TaskSuggestions []string
+	SubtasksByTask  template.JS
 }
 
 func (h *Handler) Day(w http.ResponseWriter, r *http.Request) {
@@ -65,14 +68,21 @@ func (h *Handler) Day(w http.ResponseWriter, r *http.Request) {
 		total += e.Hours
 	}
 
+	since := date.AddDate(0, 0, -5).Format("2006-01-02")
+	tasks, _ := h.DB.GetRecentTasks(userID, since)
+	subtaskMap, _ := h.DB.GetRecentSubtasksByTask(userID, since)
+	subtaskJSON, _ := json.Marshal(subtaskMap)
+
 	h.renderTemplate(w, "day.html", DayPageData{
-		Date:          dateStr,
-		DateFormatted: date.Format("Monday, January 2, 2006"),
-		PrevDate:      date.AddDate(0, 0, -1).Format("2006-01-02"),
-		NextDate:      date.AddDate(0, 0, 1).Format("2006-01-02"),
-		UserName:      userName,
-		Entries:       entries,
-		TotalHours:    total,
+		Date:            dateStr,
+		DateFormatted:   date.Format("Monday, January 2, 2006"),
+		PrevDate:        date.AddDate(0, 0, -1).Format("2006-01-02"),
+		NextDate:        date.AddDate(0, 0, 1).Format("2006-01-02"),
+		UserName:        userName,
+		Entries:         entries,
+		TotalHours:      total,
+		TaskSuggestions: tasks,
+		SubtasksByTask:  template.JS(subtaskJSON),
 	})
 }
 
