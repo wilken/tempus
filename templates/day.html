@@ -245,6 +245,7 @@
     function deleteRow(btn) {
       btn.closest('tr').remove();
       updateTotal();
+      saveForm();
     }
 
     function updateTotal() {
