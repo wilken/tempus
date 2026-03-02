@@ -1,0 +1,6 @@
+.env
+tempus.db
+tempus.db-shm
+tempus.db-wal
+tempus
+tempus-week-*.xlsx
