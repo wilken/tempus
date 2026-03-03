@@ -25,7 +25,7 @@
 | `internal/db/db.go`               | SQLite schema, DB/User/TimeEntry types, CRUD             |
 | `internal/auth/auth.go`           | Google OAuth flow, session middleware, context keys      |
 | `internal/handlers/handlers.go`   | HTTP handlers + Excel builder                            |
-| `templates/`                      | HTML templates (login.html, day.html)                    |
+| `templates/`                      | HTML templates (login.html, day.html, week.html)         |
 | `internal/db/db_test.go`          | DB layer tests (in-memory SQLite)                        |
 | `internal/auth/auth_test.go`      | Auth middleware and login handler tests                  |
 | `internal/handlers/handlers_test.go` | Handler tests (httptest + chi + in-memory DB)         |
@@ -54,6 +54,10 @@ time_entries(id INT PK, user_id TEXT, date TEXT, task TEXT, subtask TEXT, hours 
 
 Date is stored as `YYYY-MM-DD` text.
 
+## Week view (`/week/{date}`)
+
+Read-only single table matching the Excel layout: Date | Task | Subtask | Hours, with a blue "Daily total" row after each day and a "Week total" at the bottom. Any date in the week resolves to Monday. Day headings link back to the day edit page. Previous/Next week navigation at top; "Go to today" and "Export to Excel" links at bottom.
+
 ## Week export
 
 Monday–Sunday. Entries are grouped by day with daily totals and a week total row at the bottom. File name: `tempus-week-YYYY-MM-DD.xlsx` (Monday date).
@@ -65,3 +69,4 @@ Monday–Sunday. Entries are grouped by day with daily totals and a week total r
 - Task and subtask fields show autocomplete suggestions from the 5 days prior to the viewed date, plus anything entered earlier in the current session.
 - Subtask suggestions are filtered to match the task in the same row.
 - A toast notification confirms saves and shows errors if the connection is lost.
+- "View week" link navigates to `/week/{date}`.

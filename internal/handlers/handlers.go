@@ -135,6 +135,82 @@ func (h *Handler) SaveDay(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/day/"+dateStr, http.StatusSeeOther)
 }
 
+// DayGroup holds entries for a single day, used by the week view.
+type DayGroup struct {
+	Date          string
+	DateFormatted string
+	DateShort     string // "Mon Jan 2" — matches the Excel column format
+	Entries       []db.TimeEntry
+	Total         float64
+}
+
+// WeekPageData is the view model for the week view page.
+type WeekPageData struct {
+	WeekLabel  string
+	Monday     string
+	PrevMonday string
+	NextMonday string
+	Today      string
+	Days       []DayGroup
+	WeekTotal  float64
+	UserName   string
+}
+
+func (h *Handler) Week(w http.ResponseWriter, r *http.Request) {
+	dateStr := chi.URLParam(r, "date")
+	date, err := time.Parse("2006-01-02", dateStr)
+	if err != nil {
+		http.Error(w, "invalid date", http.StatusBadRequest)
+		return
+	}
+
+	weekday := int(date.Weekday())
+	if weekday == 0 {
+		weekday = 7
+	}
+	monday := date.AddDate(0, 0, -(weekday - 1))
+	sunday := monday.AddDate(0, 0, 6)
+
+	userID := r.Context().Value(auth.CtxUserID).(string)
+	userName, _ := r.Context().Value(auth.CtxUserName).(string)
+
+	entries, err := h.DB.GetEntriesForWeek(userID, monday.Format("2006-01-02"), sunday.Format("2006-01-02"))
+	if err != nil {
+		http.Error(w, "database error", http.StatusInternalServerError)
+		return
+	}
+
+	// Build a DayGroup for every day Mon–Sun, then fill in entries.
+	dayMap := make(map[string]*DayGroup, 7)
+	days := make([]DayGroup, 7)
+	for i := 0; i < 7; i++ {
+		d := monday.AddDate(0, 0, i)
+		ds := d.Format("2006-01-02")
+		days[i] = DayGroup{Date: ds, DateFormatted: d.Format("Monday, January 2"), DateShort: d.Format("Mon Jan 2")}
+		dayMap[ds] = &days[i]
+	}
+
+	var weekTotal float64
+	for _, e := range entries {
+		if dg, ok := dayMap[e.Date]; ok {
+			dg.Entries = append(dg.Entries, e)
+			dg.Total += e.Hours
+			weekTotal += e.Hours
+		}
+	}
+
+	h.renderTemplate(w, "week.html", WeekPageData{
+		WeekLabel:  fmt.Sprintf("%s – %s", monday.Format("Jan 2"), sunday.Format("Jan 2, 2006")),
+		Monday:     monday.Format("2006-01-02"),
+		PrevMonday: monday.AddDate(0, 0, -7).Format("2006-01-02"),
+		NextMonday: monday.AddDate(0, 0, 7).Format("2006-01-02"),
+		Today:      time.Now().Format("2006-01-02"),
+		Days:       days,
+		WeekTotal:  weekTotal,
+		UserName:   userName,
+	})
+}
+
 func (h *Handler) ExportWeek(w http.ResponseWriter, r *http.Request) {
 	dateStr := r.URL.Query().Get("date")
 	if dateStr == "" {

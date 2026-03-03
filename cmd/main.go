@@ -73,6 +73,7 @@ func main() {
 		r.Get("/", pageH.Index)
 		r.Get("/day/{date}", pageH.Day)
 		r.Post("/day/{date}/save", pageH.SaveDay)
+		r.Get("/week/{date}", pageH.Week)
 		r.Get("/export/week", pageH.ExportWeek)
 	})
 

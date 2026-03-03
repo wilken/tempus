@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Tempus fugit — {{.WeekLabel}}</title>
+        <style>
+            * {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+            body {
+                font-family:
+                    system-ui,
+                    -apple-system,
+                    sans-serif;
+                background: #f5f7fa;
+                color: #1a1a1a;
+            }
+
+            header {
+                background: white;
+                border-bottom: 1px solid #e8eaed;
+                padding: 0 24px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                height: 56px;
+            }
+            header h1 {
+                font-size: 1.2rem;
+                font-weight: 700;
+                letter-spacing: -0.3px;
+            }
+            .header-right {
+                display: flex;
+                align-items: center;
+                gap: 16px;
+                font-size: 14px;
+                color: #555;
+            }
+            .header-right a {
+                color: #555;
+                text-decoration: none;
+            }
+            .header-right a:hover {
+                color: #1a1a1a;
+            }
+
+            .week-nav {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 20px 24px;
+                max-width: 860px;
+                margin: 0 auto;
+            }
+            .week-nav h2 {
+                font-size: 1.15rem;
+                font-weight: 600;
+            }
+            .nav-btn {
+                display: inline-flex;
+                align-items: center;
+                text-decoration: none;
+                color: #444;
+                padding: 8px 16px;
+                border: 1px solid #dadce0;
+                border-radius: 6px;
+                background: white;
+                font-size: 14px;
+                transition: background 0.1s;
+                min-width: 110px;
+                justify-content: center;
+            }
+            .nav-btn:hover {
+                background: #f0f4ff;
+                border-color: #b3c2f0;
+            }
+
+            .container {
+                max-width: 860px;
+                margin: 0 auto;
+                padding: 0 24px 64px;
+            }
+
+            .card {
+                background: white;
+                border-radius: 10px;
+                box-shadow: 0 1px 6px rgba(0, 0, 0, 0.07);
+                overflow: hidden;
+                margin-bottom: 16px;
+            }
+
+            table {
+                width: 100%;
+                border-collapse: collapse;
+            }
+            thead th {
+                padding: 11px 14px;
+                text-align: left;
+                font-size: 11px;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.06em;
+                color: #888;
+                border-bottom: 1px solid #e8eaed;
+                background: #fafafa;
+            }
+            tbody td {
+                padding: 9px 14px;
+                font-size: 14px;
+                border-bottom: 1px solid #f0f0f0;
+            }
+            .col-hours {
+                width: 80px;
+                text-align: right;
+            }
+
+            tr.day-total td {
+                background: #f0f4ff;
+                font-weight: 600;
+                font-size: 13px;
+                border-bottom: 2px solid #e8eaed;
+                padding-top: 8px;
+                padding-bottom: 8px;
+            }
+            tr.week-total td {
+                font-weight: 700;
+                font-size: 14px;
+                border-top: 2px solid #dadce0;
+                border-bottom: none;
+                padding: 12px 14px;
+            }
+            tr.day-link td {
+                padding: 10px 14px 4px;
+                border-bottom: none;
+            }
+            tr.day-link a {
+                font-size: 12px;
+                font-weight: 600;
+                color: #4285f4;
+                text-decoration: none;
+                text-transform: uppercase;
+                letter-spacing: 0.04em;
+            }
+            tr.day-link a:hover {
+                text-decoration: underline;
+            }
+
+            .actions {
+                display: flex;
+                justify-content: space-between;
+            }
+            .btn-export {
+                color: #4285f4;
+                text-decoration: none;
+                font-size: 14px;
+                display: flex;
+                align-items: center;
+                gap: 5px;
+            }
+            .btn-export:hover {
+                text-decoration: underline;
+            }
+        </style>
+    </head>
+    <body>
+        <header>
+            <h1>Tempus fugit</h1>
+            <div class="header-right">
+                <span>{{.UserName}}</span>
+                <a href="/logout">Sign out</a>
+            </div>
+        </header>
+
+        <div class="week-nav">
+            <a class="nav-btn" href="/week/{{.PrevMonday}}">&#8592; Previous</a>
+            <h2>{{.WeekLabel}}</h2>
+            <a class="nav-btn" href="/week/{{.NextMonday}}">Next &#8594;</a>
+        </div>
+
+        <div class="container">
+            <div class="card">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 120px">Date</th>
+                            <th>Task</th>
+                            <th>Subtask</th>
+                            <th class="col-hours">Hours</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{range .Days}}{{if .Entries}}{{$day := .}}
+                        <tr class="day-link">
+                            <td colspan="4">
+                                <a href="/day/{{$day.Date}}"
+                                    >{{$day.DateFormatted}}</a
+                                >
+                            </td>
+                        </tr>
+                        {{range .Entries}}
+                        <tr>
+                            <td style="color: #888">{{$day.DateShort}}</td>
+                            <td>{{.Task}}</td>
+                            <td style="color: #666">{{.Subtask}}</td>
+                            <td class="col-hours">{{.Hours}}</td>
+                        </tr>
+                        {{end}}
+                        <tr class="day-total">
+                            <td></td>
+                            <td>Daily total</td>
+                            <td></td>
+                            <td class="col-hours">
+                                {{printf "%.2f" $day.Total}}
+                            </td>
+                        </tr>
+                        {{end}}{{end}}
+                    </tbody>
+                    <tfoot>
+                        <tr class="week-total">
+                            <td colspan="3">Week total</td>
+                            <td class="col-hours">
+                                {{printf "%.2f" .WeekTotal}}
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <div class="actions">
+                <a class="btn-export" href="/day/{{.Today}}"
+                    >&#128197; Go to today</a
+                >
+                <a class="btn-export" href="/export/week?date={{.Monday}}"
+                    >&#8659; Export to Excel</a
+                >
+            </div>
+        </div>
+    </body>
+</html>

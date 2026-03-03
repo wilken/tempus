@@ -16,11 +16,16 @@ import (
 	"tempus/internal/db"
 )
 
-// testTmpl is a minimal day.html template that renders the date so tests can
-// assert it appears in the response body.
-var testTmpl = template.Must(template.New("day.html").Parse(
-	`<html><body>{{.Date}}</body></html>`,
-))
+// testTmpl covers both page templates with just enough output to assert on.
+var testTmpl = func() *template.Template {
+	t := template.Must(template.New("day.html").Parse(
+		`<html><body>{{.Date}}</body></html>`,
+	))
+	template.Must(t.New("week.html").Parse(
+		`<html><body>{{.WeekLabel}}</body></html>`,
+	))
+	return t
+}()
 
 func newTestDB(t *testing.T) *db.DB {
 	t.Helper()
@@ -156,6 +161,42 @@ func TestSaveDaySkipsEmptyAndZeroHours(t *testing.T) {
 	must(t, err)
 	if len(entries) != 0 {
 		t.Fatalf("expected 0 entries (empty task and zero hours both filtered), got %d", len(entries))
+	}
+}
+
+func TestWeekBadDate(t *testing.T) {
+	h := &Handler{DB: newTestDB(t), Tmpl: testTmpl}
+	req := httptest.NewRequest("GET", "/week/bad-date", nil)
+	req = withAuth(req, "u1", "Alice")
+	req = withChiParam(req, "date", "not-a-date")
+	rec := httptest.NewRecorder()
+	h.Week(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("expected 400, got %d", rec.Code)
+	}
+}
+
+func TestWeekRendersOK(t *testing.T) {
+	d := newTestDB(t)
+	must(t, d.UpsertUser(db.User{ID: "u1", Email: "a@example.com", Name: "Alice"}))
+	must(t, d.ReplaceEntriesForDay("u1", "2024-01-15", []db.TimeEntry{
+		{UserID: "u1", Date: "2024-01-15", Task: "Task A", Hours: 2},
+	}))
+	h := &Handler{DB: d, Tmpl: testTmpl}
+
+	req := httptest.NewRequest("GET", "/week/2024-01-15", nil)
+	req = withAuth(req, "u1", "Alice")
+	req = withChiParam(req, "date", "2024-01-15")
+	rec := httptest.NewRecorder()
+	h.Week(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected 200, got %d", rec.Code)
+	}
+	// 2024-01-15 is a Monday; the week label should contain "Jan 15".
+	if !strings.Contains(rec.Body.String(), "Jan 15") {
+		t.Errorf("expected week label in body, got: %q", rec.Body.String())
 	}
 }
 
