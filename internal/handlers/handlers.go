@@ -324,6 +324,7 @@ func buildExcel(entries []db.TimeEntry, monday, sunday time.Time, userName strin
 	f.SetColWidth(sheet, "D", "D", 20)
 	f.SetColWidth(sheet, "E", "E", 8)
 
-	filename := fmt.Sprintf("tempus-week-%s.xlsx", monday.Format("2006-01-02"))
+	safeName := strings.ReplaceAll(userName, " ", "_")
+	filename := fmt.Sprintf("%s-week-%s.xlsx", safeName, monday.Format("2006-01-02"))
 	return f, filename
 }

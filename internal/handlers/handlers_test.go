@@ -223,9 +223,9 @@ func TestBuildExcel(t *testing.T) {
 		{UserID: "u1", Date: "2024-01-15", Task: "Task A", Hours: 2},
 	}
 
-	f, filename := buildExcel(entries, monday, sunday, "Alice")
+	f, filename := buildExcel(entries, monday, sunday, "Alice Smith")
 
-	if filename != "tempus-week-2024-01-15.xlsx" {
+	if filename != "Alice_Smith-week-2024-01-15.xlsx" {
 		t.Errorf("unexpected filename: %q", filename)
 	}
 
@@ -239,5 +239,14 @@ func TestBuildExcel(t *testing.T) {
 	}
 	if !found {
 		t.Errorf("expected sheet named 'Week', got %v", sheets)
+	}
+
+	// Name column (D) should contain the username on data rows.
+	name, err := f.GetCellValue("Week", "D5")
+	if err != nil {
+		t.Fatalf("reading D5: %v", err)
+	}
+	if name != "Alice Smith" {
+		t.Errorf("expected Name column to be 'Alice Smith', got %q", name)
 	}
 }

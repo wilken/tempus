@@ -56,11 +56,11 @@ Date is stored as `YYYY-MM-DD` text.
 
 ## Week view (`/week/{date}`)
 
-Read-only single table matching the Excel layout: Date | Task | Subtask | Hours, with a blue "Daily total" row after each day and a "Week total" at the bottom. Any date in the week resolves to Monday. Day headings link back to the day edit page. Previous/Next week navigation at top; "Go to today" and "Export to Excel" links at bottom.
+Read-only single table with columns Task | Subtask | Hours, with a blue "Daily total" row after each day and a "Week total" at the bottom. Any date in the week resolves to Monday. Day headings (links back to the day edit page) are shown as a row spanning all columns above each day's entries. Previous/Next week navigation at top; "Go to today" and "Export to Excel" links at bottom.
 
 ## Week export
 
-Monday–Sunday. Entries are grouped by day with daily totals and a week total row at the bottom. File name: `tempus-week-YYYY-MM-DD.xlsx` (Monday date).
+Monday–Sunday. Columns: Date | Task | Subtask | Name | Hours. Entries are grouped by day with daily totals and a week total row at the bottom. File name: `{username}-week-YYYY-MM-DD.xlsx` (Monday date; spaces in username replaced with `_`).
 
 ## Day page UX
 
