@@ -274,8 +274,9 @@ func buildExcel(entries []db.TimeEntry, monday, sunday time.Time, userName strin
 	f.SetCellValue(sheet, "A4", "Date")
 	f.SetCellValue(sheet, "B4", "Task")
 	f.SetCellValue(sheet, "C4", "Subtask")
-	f.SetCellValue(sheet, "D4", "Hours")
-	f.SetCellStyle(sheet, "A4", "D4", bold)
+	f.SetCellValue(sheet, "D4", "Name")
+	f.SetCellValue(sheet, "E4", "Hours")
+	f.SetCellStyle(sheet, "A4", "E4", bold)
 
 	row := 5
 	var weekTotal float64
@@ -287,8 +288,8 @@ func buildExcel(entries []db.TimeEntry, monday, sunday time.Time, userName strin
 			return
 		}
 		f.SetCellValue(sheet, fmt.Sprintf("B%d", row), "Daily total")
-		f.SetCellValue(sheet, fmt.Sprintf("D%d", row), dayTotal)
-		f.SetCellStyle(sheet, fmt.Sprintf("A%d", row), fmt.Sprintf("D%d", row), total)
+		f.SetCellValue(sheet, fmt.Sprintf("E%d", row), dayTotal)
+		f.SetCellStyle(sheet, fmt.Sprintf("A%d", row), fmt.Sprintf("E%d", row), total)
 		row++
 		row++ // blank separator
 		dayTotal = 0
@@ -303,7 +304,8 @@ func buildExcel(entries []db.TimeEntry, monday, sunday time.Time, userName strin
 		f.SetCellValue(sheet, fmt.Sprintf("A%d", row), d.Format("Mon Jan 2"))
 		f.SetCellValue(sheet, fmt.Sprintf("B%d", row), e.Task)
 		f.SetCellValue(sheet, fmt.Sprintf("C%d", row), e.Subtask)
-		f.SetCellValue(sheet, fmt.Sprintf("D%d", row), e.Hours)
+		f.SetCellValue(sheet, fmt.Sprintf("D%d", row), userName)
+		f.SetCellValue(sheet, fmt.Sprintf("E%d", row), e.Hours)
 		dayTotal += e.Hours
 		weekTotal += e.Hours
 		row++
@@ -312,14 +314,15 @@ func buildExcel(entries []db.TimeEntry, monday, sunday time.Time, userName strin
 
 	// Week total
 	f.SetCellValue(sheet, fmt.Sprintf("A%d", row), "Week total")
-	f.SetCellValue(sheet, fmt.Sprintf("D%d", row), weekTotal)
-	f.SetCellStyle(sheet, fmt.Sprintf("A%d", row), fmt.Sprintf("D%d", row), bold)
+	f.SetCellValue(sheet, fmt.Sprintf("E%d", row), weekTotal)
+	f.SetCellStyle(sheet, fmt.Sprintf("A%d", row), fmt.Sprintf("E%d", row), bold)
 
 	// Column widths
 	f.SetColWidth(sheet, "A", "A", 14)
 	f.SetColWidth(sheet, "B", "B", 32)
 	f.SetColWidth(sheet, "C", "C", 22)
-	f.SetColWidth(sheet, "D", "D", 8)
+	f.SetColWidth(sheet, "D", "D", 20)
+	f.SetColWidth(sheet, "E", "E", 8)
 
 	filename := fmt.Sprintf("tempus-week-%s.xlsx", monday.Format("2006-01-02"))
 	return f, filename

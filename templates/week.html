@@ -186,7 +186,6 @@
                 <table>
                     <thead>
                         <tr>
-                            <th style="width: 120px">Date</th>
                             <th>Task</th>
                             <th>Subtask</th>
                             <th class="col-hours">Hours</th>
@@ -195,7 +194,7 @@
                     <tbody>
                         {{range .Days}}{{if .Entries}}{{$day := .}}
                         <tr class="day-link">
-                            <td colspan="4">
+                            <td colspan="3">
                                 <a href="/day/{{$day.Date}}"
                                     >{{$day.DateFormatted}}</a
                                 >
@@ -203,14 +202,12 @@
                         </tr>
                         {{range .Entries}}
                         <tr>
-                            <td style="color: #888">{{$day.DateShort}}</td>
                             <td>{{.Task}}</td>
                             <td style="color: #666">{{.Subtask}}</td>
-                            <td class="col-hours">{{.Hours}}</td>
+                            <td class="col-hours">{{printf "%.2f" .Hours}}</td>
                         </tr>
                         {{end}}
                         <tr class="day-total">
-                            <td></td>
                             <td>Daily total</td>
                             <td></td>
                             <td class="col-hours">
@@ -221,7 +218,7 @@
                     </tbody>
                     <tfoot>
                         <tr class="week-total">
-                            <td colspan="3">Week total</td>
+                            <td colspan="2">Week total</td>
                             <td class="col-hours">
                                 {{printf "%.2f" .WeekTotal}}
                             </td>
