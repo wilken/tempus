@@ -249,6 +249,15 @@ func TestBuildExcel(t *testing.T) {
 	if name != "Alice Smith" {
 		t.Errorf("expected Name column to be 'Alice Smith', got %q", name)
 	}
+
+	// Date column (A) should use M/D/YYYY format.
+	date, err := f.GetCellValue("Week", "A5")
+	if err != nil {
+		t.Fatalf("reading A5: %v", err)
+	}
+	if date != "1/15/2024" {
+		t.Errorf("expected date '1/15/2024', got %q", date)
+	}
 }
 
 func TestMondayOf(t *testing.T) {

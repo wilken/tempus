@@ -257,10 +257,6 @@ func buildExcel(entries []db.TimeEntry, monday, sunday time.Time, userName strin
 	f.DeleteSheet("Sheet1")
 
 	bold, _ := f.NewStyle(&excelize.Style{Font: &excelize.Font{Bold: true}})
-	total, _ := f.NewStyle(&excelize.Style{
-		Font: &excelize.Font{Bold: true},
-		Fill: excelize.Fill{Type: "pattern", Color: []string{"#F0F4FF"}, Pattern: 1},
-	})
 
 	// Meta header
 	f.SetCellValue(sheet, "A1", "Week")
@@ -280,38 +276,22 @@ func buildExcel(entries []db.TimeEntry, monday, sunday time.Time, userName strin
 	row := 5
 	var weekTotal float64
 	prevDate := ""
-	var dayTotal float64
 	var dateFormatted string
-
-	flushDayTotal := func() {
-		if prevDate == "" {
-			return
-		}
-		f.SetCellValue(sheet, fmt.Sprintf("B%d", row), "Daily total")
-		f.SetCellValue(sheet, fmt.Sprintf("E%d", row), dayTotal)
-		f.SetCellStyle(sheet, fmt.Sprintf("A%d", row), fmt.Sprintf("E%d", row), total)
-		row++
-		row++ // blank separator
-		dayTotal = 0
-	}
 
 	for _, e := range entries {
 		if e.Date != prevDate {
-			flushDayTotal()
 			prevDate = e.Date
 			d, _ := time.Parse("2006-01-02", e.Date)
-			dateFormatted = d.Format("Mon Jan 2")
+			dateFormatted = d.Format("1/2/2006")
 		}
 		f.SetCellValue(sheet, fmt.Sprintf("A%d", row), dateFormatted)
 		f.SetCellValue(sheet, fmt.Sprintf("B%d", row), e.Task)
 		f.SetCellValue(sheet, fmt.Sprintf("C%d", row), e.Subtask)
 		f.SetCellValue(sheet, fmt.Sprintf("D%d", row), userName)
 		f.SetCellValue(sheet, fmt.Sprintf("E%d", row), e.Hours)
-		dayTotal += e.Hours
 		weekTotal += e.Hours
 		row++
 	}
-	flushDayTotal()
 
 	// Week total
 	f.SetCellValue(sheet, fmt.Sprintf("A%d", row), "Week total")
