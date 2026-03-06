@@ -139,7 +139,6 @@ func (h *Handler) SaveDay(w http.ResponseWriter, r *http.Request) {
 type DayGroup struct {
 	Date          string
 	DateFormatted string
-	DateShort     string // "Mon Jan 2" — matches the Excel column format
 	Entries       []db.TimeEntry
 	Total         float64
 }
@@ -164,11 +163,7 @@ func (h *Handler) Week(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	weekday := int(date.Weekday())
-	if weekday == 0 {
-		weekday = 7
-	}
-	monday := date.AddDate(0, 0, -(weekday - 1))
+	monday := mondayOf(date)
 	sunday := monday.AddDate(0, 0, 6)
 
 	userID := r.Context().Value(auth.CtxUserID).(string)
@@ -186,7 +181,7 @@ func (h *Handler) Week(w http.ResponseWriter, r *http.Request) {
 	for i := 0; i < 7; i++ {
 		d := monday.AddDate(0, 0, i)
 		ds := d.Format("2006-01-02")
-		days[i] = DayGroup{Date: ds, DateFormatted: d.Format("Monday, January 2"), DateShort: d.Format("Mon Jan 2")}
+		days[i] = DayGroup{Date: ds, DateFormatted: d.Format("Monday, January 2")}
 		dayMap[ds] = &days[i]
 	}
 
@@ -222,12 +217,7 @@ func (h *Handler) ExportWeek(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Find the Monday of the week.
-	weekday := int(date.Weekday())
-	if weekday == 0 {
-		weekday = 7
-	}
-	monday := date.AddDate(0, 0, -(weekday - 1))
+	monday := mondayOf(date)
 	sunday := monday.AddDate(0, 0, 6)
 
 	userID := r.Context().Value(auth.CtxUserID).(string)
@@ -249,6 +239,15 @@ func (h *Handler) ExportWeek(w http.ResponseWriter, r *http.Request) {
 	if err := f.Write(w); err != nil {
 		http.Error(w, "failed to write excel file", http.StatusInternalServerError)
 	}
+}
+
+// mondayOf returns the Monday of the week containing date.
+func mondayOf(date time.Time) time.Time {
+	weekday := int(date.Weekday())
+	if weekday == 0 {
+		weekday = 7
+	}
+	return date.AddDate(0, 0, -(weekday - 1))
 }
 
 func buildExcel(entries []db.TimeEntry, monday, sunday time.Time, userName string) (*excelize.File, string) {
@@ -282,6 +281,7 @@ func buildExcel(entries []db.TimeEntry, monday, sunday time.Time, userName strin
 	var weekTotal float64
 	prevDate := ""
 	var dayTotal float64
+	var dateFormatted string
 
 	flushDayTotal := func() {
 		if prevDate == "" {
@@ -299,9 +299,10 @@ func buildExcel(entries []db.TimeEntry, monday, sunday time.Time, userName strin
 		if e.Date != prevDate {
 			flushDayTotal()
 			prevDate = e.Date
+			d, _ := time.Parse("2006-01-02", e.Date)
+			dateFormatted = d.Format("Mon Jan 2")
 		}
-		d, _ := time.Parse("2006-01-02", e.Date)
-		f.SetCellValue(sheet, fmt.Sprintf("A%d", row), d.Format("Mon Jan 2"))
+		f.SetCellValue(sheet, fmt.Sprintf("A%d", row), dateFormatted)
 		f.SetCellValue(sheet, fmt.Sprintf("B%d", row), e.Task)
 		f.SetCellValue(sheet, fmt.Sprintf("C%d", row), e.Subtask)
 		f.SetCellValue(sheet, fmt.Sprintf("D%d", row), userName)

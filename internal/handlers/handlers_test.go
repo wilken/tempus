@@ -250,3 +250,22 @@ func TestBuildExcel(t *testing.T) {
 		t.Errorf("expected Name column to be 'Alice Smith', got %q", name)
 	}
 }
+
+func TestMondayOf(t *testing.T) {
+	cases := []struct {
+		input string
+		want  string
+	}{
+		{"2024-01-15", "2024-01-15"}, // already Monday
+		{"2024-01-16", "2024-01-15"}, // Tuesday
+		{"2024-01-21", "2024-01-15"}, // Sunday
+		{"2024-01-14", "2024-01-08"}, // Sunday of previous week
+	}
+	for _, c := range cases {
+		d, _ := time.Parse("2006-01-02", c.input)
+		got := mondayOf(d).Format("2006-01-02")
+		if got != c.want {
+			t.Errorf("mondayOf(%s) = %s, want %s", c.input, got, c.want)
+		}
+	}
+}
