@@ -227,6 +227,26 @@
             .btn-export:hover {
                 text-decoration: underline;
             }
+            .btn-save {
+                padding: 8px 20px;
+                border-radius: 6px;
+                border: none;
+                font-size: 14px;
+                font-weight: 500;
+                font-family: inherit;
+                cursor: pointer;
+                background: #4285f4;
+                color: white;
+                transition: background 0.15s, opacity 0.15s;
+            }
+            .btn-save:disabled {
+                background: #dadce0;
+                color: #aaa;
+                cursor: default;
+            }
+            .btn-save:not(:disabled):hover {
+                background: #1a73e8;
+            }
             /* Toast notification */
             #toast {
                 position: fixed;
@@ -377,12 +397,38 @@
                     <a class="btn-export" href="/week/{{.Date}}">
                         &#128197; View week
                     </a>
+                    <button type="button" id="btn-save" class="btn-save" disabled onclick="saveForm()">Save</button>
                 </div>
             </form>
         </div>
 
         <script>
             const subtasksByTask = {{.SubtasksByTask}};
+
+            let dirty = false;
+
+            function rowIsComplete(row) {
+              const task = row.querySelector('input[name="task"]').value.trim();
+              const subtask = row.querySelector('input[name="subtask"]').value.trim();
+              const hours = parseFloat(row.querySelector('input[name="hours"]').value);
+              return task !== '' && subtask !== '' && hours > 0;
+            }
+
+            function updateSaveButton() {
+              const btn = document.getElementById('btn-save');
+              const hasComplete = Array.from(document.querySelectorAll('#entries tr')).some(rowIsComplete);
+              btn.disabled = !(dirty && hasComplete);
+            }
+
+            function markDirty() {
+              dirty = true;
+              updateSaveButton();
+            }
+
+            function markClean() {
+              dirty = false;
+              updateSaveButton();
+            }
 
             function updateSubtaskSuggestions(row) {
               const task = row.querySelector('input[name="task"]').value;
@@ -426,6 +472,7 @@
 
             document.getElementById('entries').addEventListener('input', function(e) {
               if (e.target.name === 'hours') updateTotal();
+              markDirty();
             });
 
             let toastTimer;
@@ -449,6 +496,7 @@
                 // redirect: 'manual' makes a 303 come back as opaqueredirect (status 0)
                 if (resp.ok || resp.type === 'opaqueredirect') {
                   showToast('Saved', 'ok');
+                  markClean();
                 } else {
                   showToast('Server error — changes may not be saved', 'err');
                 }
