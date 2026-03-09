@@ -125,18 +125,23 @@ thead th {
     border-bottom: 1px solid #e8eaed;
     background: #fafafa;
 }
-tbody tr {
-    border-bottom: 1px solid #f0f0f0;
-}
-tbody tr:last-child {
-    border-bottom: none;
-}
-tbody tr:nth-child(even) {
+tbody tr:nth-child(odd):not(.link) {
     background: #f4f5fa;
 }
 tbody td {
     padding: 9px 14px;
     font-size: 14px;
+    border-bottom: 1px solid #f0f0f0;
+}
+tbody tr:last-child td {
+    border-bottom: none;
+}
+tfoot td {
+    padding: 10px 14px;
+    font-size: 14px;
+    background: #fafafa;
+    border-top: 1px solid #e8eaed;
+    border-bottom: none;
 }
 .col-hours {
     width: 80px;
@@ -144,15 +149,9 @@ tbody td {
 }
 
 /* ─── Week page ───────────────────────────────────────────── */
-tr.total {
-    background: white;
-}
 tr.total td {
     font-weight: 600;
-    font-size: 14px;
-    padding: 10px 14px;
-    border-top: 2px solid #e8eaed;
-    border-bottom: none;
+    background: #fafafa;
 }
 .muted {
     color: #666;

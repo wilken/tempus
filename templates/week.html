@@ -31,8 +31,8 @@
                             <th class="col-hours">Hours</th>
                         </tr>
                     </thead>
-                    <tbody>
                         {{range .Days}}{{if .Entries}}{{$day := .}}
+                    <tbody>
                         <tr class="link">
                             <td colspan="3">
                                 <a href="/day/{{$day.Date}}"
@@ -54,8 +54,8 @@
                                 {{printf "%.2f" $day.Total}}
                             </td>
                         </tr>
-                        {{end}}{{end}}
                     </tbody>
+                        {{end}}{{end}}
                     <tfoot>
                         <tr class="total">
                             <td colspan="2">Week total</td>
