@@ -1,3 +1,71 @@
+/* ─── Design tokens ───────────────────────────────────────── */
+:root {
+    --bg:           #f5f7fa;
+    --surface:      #ffffff;
+    --surface-alt:  #fafafa;
+    --stripe:       #f4f5fa;
+    --text:         #1a1a1a;
+    --text-muted:   #666;
+    --text-subtle:  #888;
+    --text-nav:     #555;
+    --border:       #e8eaed;
+    --border-light: #f0f0f0;
+    --accent:       #4285f4;
+    --accent-hover: #1a73e8;
+    --accent-ring:  rgba(66, 133, 244, 0.12);
+    --nav-btn-text: #444;
+    --nav-btn-hover-bg: #f0f4ff;
+    --nav-btn-hover-border: #b3c2f0;
+    --input-hover-border: #dadce0;
+    --btn-disabled-bg:    #dadce0;
+    --btn-disabled-text:  #aaa;
+    --btn-delete-color:   #bbb;
+    --btn-delete-hover:   #e53935;
+    --shadow:       rgba(0, 0, 0, 0.07);
+    --shadow-login: rgba(0, 0, 0, 0.08);
+    --toast-ok-bg:     #e6f4ea;
+    --toast-ok-text:   #1e6e2e;
+    --toast-ok-border: #81c995;
+    --toast-err-bg:     #fce8e6;
+    --toast-err-text:   #c62828;
+    --toast-err-border: #e57373;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg:           #111113;
+        --surface:      #1e1f22;
+        --surface-alt:  #26272b;
+        --stripe:       #25262a;
+        --text:         #e8eaed;
+        --text-muted:   #999;
+        --text-subtle:  #666;
+        --text-nav:     #aaa;
+        --border:       #2e2f33;
+        --border-light: #2a2b2f;
+        --accent:       #8ab4f8;
+        --accent-hover: #aecbfa;
+        --accent-ring:  rgba(138, 180, 248, 0.15);
+        --nav-btn-text: #ccc;
+        --nav-btn-hover-bg:     #1e2a3a;
+        --nav-btn-hover-border: #4a6080;
+        --input-hover-border: #444;
+        --btn-disabled-bg:   #333;
+        --btn-disabled-text: #666;
+        --btn-delete-color:  #555;
+        --btn-delete-hover:  #ef5350;
+        --shadow:       rgba(0, 0, 0, 0.4);
+        --shadow-login: rgba(0, 0, 0, 0.5);
+        --toast-ok-bg:     #1b3a23;
+        --toast-ok-text:   #81c995;
+        --toast-ok-border: #2d6a3f;
+        --toast-err-bg:     #3b1a1a;
+        --toast-err-text:   #e57373;
+        --toast-err-border: #6d2626;
+    }
+}
+
+/* ─── Base ────────────────────────────────────────────────── */
 * {
     box-sizing: border-box;
     margin: 0;
@@ -9,14 +77,14 @@ body {
         system-ui,
         -apple-system,
         sans-serif;
-    background: #f5f7fa;
-    color: #1a1a1a;
+    background: var(--bg);
+    color: var(--text);
 }
 
 /* ─── Header ─────────────────────────────────────────────── */
 header {
-    background: white;
-    border-bottom: 1px solid #e8eaed;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
     padding: 0 24px;
     display: flex;
     align-items: center;
@@ -33,14 +101,14 @@ header h1 {
     align-items: center;
     gap: 16px;
     font-size: 14px;
-    color: #555;
+    color: var(--text-nav);
 }
 .header-right a {
-    color: #555;
+    color: var(--text-nav);
     text-decoration: none;
 }
 .header-right a:hover {
-    color: #1a1a1a;
+    color: var(--text);
 }
 
 /* ─── Page nav bar ────────────────────────────────────────── */
@@ -60,19 +128,19 @@ header h1 {
     display: inline-flex;
     align-items: center;
     text-decoration: none;
-    color: #444;
+    color: var(--nav-btn-text);
     padding: 8px 16px;
-    border: 1px solid #dadce0;
+    border: 1px solid var(--border);
     border-radius: 6px;
-    background: white;
+    background: var(--surface);
     font-size: 14px;
     transition: background 0.1s;
     min-width: 110px;
     justify-content: center;
 }
 .nav-btn:hover {
-    background: #f0f4ff;
-    border-color: #b3c2f0;
+    background: var(--nav-btn-hover-bg);
+    border-color: var(--nav-btn-hover-border);
 }
 
 /* ─── Layout ──────────────────────────────────────────────── */
@@ -83,9 +151,9 @@ header h1 {
 }
 
 .card {
-    background: white;
+    background: var(--surface);
     border-radius: 10px;
-    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.07);
+    box-shadow: 0 1px 6px var(--shadow);
     overflow: hidden;
 }
 
@@ -97,7 +165,7 @@ header h1 {
     margin-top: 14px;
 }
 .btn-export {
-    color: #4285f4;
+    color: var(--accent);
     text-decoration: none;
     font-size: 14px;
     display: flex;
@@ -121,17 +189,17 @@ thead th {
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.06em;
-    color: #888;
-    border-bottom: 1px solid #e8eaed;
-    background: #fafafa;
+    color: var(--text-subtle);
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-alt);
 }
 tbody tr:nth-child(odd):not(.link) {
-    background: #f4f5fa;
+    background: var(--stripe);
 }
 tbody td {
     padding: 9px 14px;
     font-size: 14px;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid var(--border-light);
 }
 tbody tr:last-child td {
     border-bottom: none;
@@ -139,8 +207,8 @@ tbody tr:last-child td {
 tfoot td {
     padding: 10px 14px;
     font-size: 14px;
-    background: #fafafa;
-    border-top: 1px solid #e8eaed;
+    background: var(--surface-alt);
+    border-top: 1px solid var(--border);
     border-bottom: none;
 }
 .col-hours {
@@ -151,10 +219,10 @@ tfoot td {
 /* ─── Week page ───────────────────────────────────────────── */
 tr.total td {
     font-weight: 600;
-    background: #fafafa;
+    background: var(--surface-alt);
 }
 .muted {
-    color: #666;
+    color: var(--text-muted);
 }
 tr.link td {
     padding: 10px 14px 4px;
@@ -163,7 +231,7 @@ tr.link td {
 tr.link a {
     font-size: 12px;
     font-weight: 600;
-    color: #4285f4;
+    color: var(--accent);
     text-decoration: none;
     text-transform: uppercase;
     letter-spacing: 0.04em;
@@ -203,15 +271,15 @@ input[type="number"] {
 }
 input[type="text"]:hover,
 input[type="number"]:hover {
-    border-color: #dadce0;
-    background: white;
+    border-color: var(--input-hover-border);
+    background: var(--surface);
 }
 input[type="text"]:focus,
 input[type="number"]:focus {
     outline: none;
-    border-color: #4285f4;
-    background: white;
-    box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.12);
+    border-color: var(--accent);
+    background: var(--surface);
+    box-shadow: 0 0 0 3px var(--accent-ring);
 }
 .col-hours input {
     text-align: right;
@@ -221,7 +289,7 @@ input[type="number"]:focus {
     background: none;
     border: none;
     cursor: pointer;
-    color: #bbb;
+    color: var(--btn-delete-color);
     font-size: 20px;
     line-height: 1;
     padding: 4px 6px;
@@ -229,7 +297,7 @@ input[type="number"]:focus {
     transition: color 0.15s;
 }
 .btn-delete:hover {
-    color: #e53935;
+    color: var(--btn-delete-hover);
 }
 
 .table-foot {
@@ -237,14 +305,14 @@ input[type="number"]:focus {
     align-items: center;
     justify-content: space-between;
     padding: 10px 14px;
-    border-top: 1px solid #e8eaed;
-    background: #fafafa;
+    border-top: 1px solid var(--border);
+    background: var(--surface-alt);
 }
 .btn-add {
     background: none;
     border: none;
     cursor: pointer;
-    color: #4285f4;
+    color: var(--accent);
     font-size: 14px;
     font-family: inherit;
     display: flex;
@@ -254,14 +322,14 @@ input[type="number"]:focus {
     font-weight: 500;
 }
 .btn-add:hover {
-    color: #1a73e8;
+    color: var(--accent-hover);
 }
 .total-label {
     font-size: 14px;
-    color: #666;
+    color: var(--text-muted);
 }
 .total-label strong {
-    color: #1a1a1a;
+    color: var(--text);
     font-size: 15px;
 }
 
@@ -273,19 +341,19 @@ input[type="number"]:focus {
     font-weight: 500;
     font-family: inherit;
     cursor: pointer;
-    background: #4285f4;
+    background: var(--accent);
     color: white;
     transition:
         background 0.15s,
         opacity 0.15s;
 }
 .btn-save:disabled {
-    background: #dadce0;
-    color: #aaa;
+    background: var(--btn-disabled-bg);
+    color: var(--btn-disabled-text);
     cursor: default;
 }
 .btn-save:not(:disabled):hover {
-    background: #1a73e8;
+    background: var(--accent-hover);
 }
 
 #toast {
@@ -306,14 +374,14 @@ input[type="number"]:focus {
     pointer-events: auto;
 }
 #toast.ok {
-    background: #e6f4ea;
-    color: #1e6e2e;
-    border: 1px solid #81c995;
+    background: var(--toast-ok-bg);
+    color: var(--toast-ok-text);
+    border: 1px solid var(--toast-ok-border);
 }
 #toast.err {
-    background: #fce8e6;
-    color: #c62828;
-    border: 1px solid #e57373;
+    background: var(--toast-err-bg);
+    color: var(--toast-err-text);
+    border: 1px solid var(--toast-err-border);
 }
 
 /* ─── Login page ──────────────────────────────────────────── */
@@ -324,11 +392,11 @@ input[type="number"]:focus {
     min-height: 100vh;
 }
 .login-card {
-    background: white;
+    background: var(--surface);
     border-radius: 12px;
     padding: 56px 48px;
     text-align: center;
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 4px 24px var(--shadow-login);
     width: 360px;
 }
 .login-card h1 {
@@ -338,7 +406,7 @@ input[type="number"]:focus {
     letter-spacing: -0.5px;
 }
 .subtitle {
-    color: #666;
+    color: var(--text-muted);
     font-size: 15px;
     margin-bottom: 40px;
 }
@@ -347,10 +415,10 @@ input[type="number"]:focus {
     align-items: center;
     gap: 12px;
     padding: 12px 24px;
-    background: white;
-    border: 1px solid #dadce0;
+    background: var(--surface);
+    border: 1px solid var(--border);
     border-radius: 6px;
-    color: #3c4043;
+    color: var(--text);
     text-decoration: none;
     font-size: 15px;
     font-weight: 500;
@@ -361,6 +429,6 @@ input[type="number"]:focus {
     justify-content: center;
 }
 .btn-google:hover {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
-    background: #f8f9fa;
+    box-shadow: 0 2px 8px var(--shadow-login);
+    background: var(--surface-alt);
 }
