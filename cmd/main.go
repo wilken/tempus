@@ -61,6 +61,9 @@ func main() {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
+	// Static files
+	r.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+
 	// Public
 	r.Get("/login", authH.Login)
 	r.Get("/auth/google", authH.GoogleAuth)

@@ -4,69 +4,10 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Tempus — Login</title>
-        <style>
-            * {
-                box-sizing: border-box;
-                margin: 0;
-                padding: 0;
-            }
-            body {
-                font-family:
-                    system-ui,
-                    -apple-system,
-                    sans-serif;
-                background: #f5f7fa;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                min-height: 100vh;
-                color: #1a1a1a;
-            }
-            .card {
-                background: white;
-                border-radius: 12px;
-                padding: 56px 48px;
-                text-align: center;
-                box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
-                width: 360px;
-            }
-            h1 {
-                font-size: 2rem;
-                font-weight: 700;
-                margin-bottom: 6px;
-                letter-spacing: -0.5px;
-            }
-            .subtitle {
-                color: #666;
-                font-size: 15px;
-                margin-bottom: 40px;
-            }
-            .btn-google {
-                display: inline-flex;
-                align-items: center;
-                gap: 12px;
-                padding: 12px 24px;
-                background: white;
-                border: 1px solid #dadce0;
-                border-radius: 6px;
-                color: #3c4043;
-                text-decoration: none;
-                font-size: 15px;
-                font-weight: 500;
-                transition:
-                    box-shadow 0.2s,
-                    background 0.1s;
-                width: 100%;
-                justify-content: center;
-            }
-            .btn-google:hover {
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
-                background: #f8f9fa;
-            }
-        </style>
+        <link rel="stylesheet" href="/static/style.css" />
     </head>
-    <body>
-        <div class="card">
+    <body class="login-body">
+        <div class="login-card">
             <h1>Tempus fugit</h1>
             <p class="subtitle">Time registration</p>
             <a class="btn-google" href="/auth/google">
