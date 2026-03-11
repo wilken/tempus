@@ -35,13 +35,13 @@ func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 
 // DayPageData is the view model for the day page.
 type DayPageData struct {
-	Date              string
-	DateFormatted     string
-	PrevDate          string
-	NextDate          string
-	UserName          string
-	Entries           []db.TimeEntry
-	TotalHours        float64
+	Date            string
+	DateFormatted   string
+	PrevDate        string
+	NextDate        string
+	UserName        string
+	Entries         []db.TimeEntry
+	TotalHours      float64
 	TaskSuggestions []string
 	SubtasksByTask  template.JS
 }
@@ -68,7 +68,7 @@ func (h *Handler) Day(w http.ResponseWriter, r *http.Request) {
 		total += e.Hours
 	}
 
-	since := date.AddDate(0, 0, -5).Format("2006-01-02")
+	since := date.AddDate(0, 0, -10).Format("2006-01-02")
 	tasks, _ := h.DB.GetRecentTasks(userID, since)
 	subtaskMap, _ := h.DB.GetRecentSubtasksByTask(userID, since)
 	subtaskJSON, _ := json.Marshal(subtaskMap)
