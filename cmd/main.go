@@ -74,6 +74,7 @@ func main() {
 	r.Group(func(r chi.Router) {
 		r.Use(authH.Middleware)
 		r.Get("/", pageH.Index)
+		r.Get("/day", pageH.Index)
 		r.Get("/day/{date}", pageH.Day)
 		r.Post("/day/{date}/save", pageH.SaveDay)
 		r.Get("/week/{date}", pageH.Week)

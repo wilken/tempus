@@ -149,7 +149,6 @@ type WeekPageData struct {
 	Monday     string
 	PrevMonday string
 	NextMonday string
-	Today      string
 	Days       []DayGroup
 	WeekTotal  float64
 	UserName   string
@@ -199,7 +198,6 @@ func (h *Handler) Week(w http.ResponseWriter, r *http.Request) {
 		Monday:     monday.Format("2006-01-02"),
 		PrevMonday: monday.AddDate(0, 0, -7).Format("2006-01-02"),
 		NextMonday: monday.AddDate(0, 0, 7).Format("2006-01-02"),
-		Today:      time.Now().Format("2006-01-02"),
 		Days:       days,
 		WeekTotal:  weekTotal,
 		UserName:   userName,
