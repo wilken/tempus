@@ -384,6 +384,135 @@ input[type="number"]:focus {
     border: 1px solid var(--toast-err-border);
 }
 
+/* ─── User menu dropdown ──────────────────────────────────── */
+.user-menu {
+    position: relative;
+}
+.user-menu-toggle {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    font-family: inherit;
+    color: var(--text-nav);
+    padding: 6px 10px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: background 0.1s, color 0.1s;
+}
+.user-menu-toggle:hover {
+    background: var(--stripe);
+    color: var(--text);
+}
+.user-menu-panel {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: calc(100% + 6px);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 4px 16px var(--shadow);
+    min-width: 160px;
+    z-index: 200;
+    overflow: hidden;
+}
+.user-menu-panel.open {
+    display: block;
+}
+.user-menu-panel a,
+.user-menu-panel button {
+    display: block;
+    width: 100%;
+    padding: 10px 16px;
+    text-align: left;
+    font-size: 14px;
+    font-family: inherit;
+    color: var(--text);
+    text-decoration: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: background 0.1s;
+}
+.user-menu-panel a:hover,
+.user-menu-panel button:hover {
+    background: var(--stripe);
+}
+.menu-item-danger {
+    color: var(--btn-delete-hover) !important;
+}
+.menu-item-danger:hover {
+    background: var(--stripe);
+}
+
+/* ─── Delete account modal ────────────────────────────────── */
+.modal-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 300;
+    align-items: center;
+    justify-content: center;
+}
+.modal-backdrop.open {
+    display: flex;
+}
+.modal {
+    background: var(--surface);
+    border-radius: 10px;
+    padding: 28px 32px;
+    max-width: 380px;
+    width: 90%;
+    box-shadow: 0 8px 32px var(--shadow);
+}
+.modal h2 {
+    font-size: 1.1rem;
+    margin-bottom: 10px;
+}
+.modal p {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-bottom: 24px;
+    line-height: 1.5;
+}
+.modal-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+.btn-cancel {
+    padding: 8px 18px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 14px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.1s;
+}
+.btn-cancel:hover {
+    background: var(--stripe);
+}
+.btn-danger {
+    padding: 8px 18px;
+    border-radius: 6px;
+    border: none;
+    background: var(--btn-delete-hover);
+    color: white;
+    font-size: 14px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: opacity 0.15s;
+}
+.btn-danger:hover {
+    opacity: 0.85;
+}
+
 /* ─── Login page ──────────────────────────────────────────── */
 .login-body {
     display: flex;

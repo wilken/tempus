@@ -124,6 +124,27 @@ func TestGetRecentSubtasksByTask(t *testing.T) {
 	}
 }
 
+func TestDeleteUser(t *testing.T) {
+	d := newTestDB(t)
+	must(t, d.UpsertUser(User{ID: "u1", Email: "a@example.com", Name: "Alice"}))
+
+	day := "2024-01-15"
+	must(t, d.ReplaceEntriesForDay("u1", day, []TimeEntry{
+		{UserID: "u1", Date: day, Task: "Work", Hours: 3},
+	}))
+
+	must(t, d.DeleteUser("u1"))
+
+	entries, err := d.GetEntriesForDay("u1", day)
+	must(t, err)
+	if len(entries) != 0 {
+		t.Fatalf("expected 0 entries after DeleteUser, got %d", len(entries))
+	}
+
+	// User row should also be gone: UpsertUser on same ID should insert without conflict.
+	must(t, d.UpsertUser(User{ID: "u1", Email: "a@example.com", Name: "Alice"}))
+}
+
 func TestGetEntriesForWeek(t *testing.T) {
 	d := newTestDB(t)
 	must(t, d.UpsertUser(User{ID: "u1", Email: "a@example.com", Name: "Alice"}))

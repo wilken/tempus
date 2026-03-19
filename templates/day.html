@@ -7,13 +7,7 @@
         <link rel="stylesheet" href="/static/style.css" />
     </head>
     <body>
-        <header>
-            <h1>Tempus fugit</h1>
-            <div class="header-right">
-                <span>{{.UserName}}</span>
-                <a href="/logout">Sign out</a>
-            </div>
-        </header>
+        {{template "header" .}}
 
         <div class="page-nav">
             <a class="nav-btn" href="/day/{{.PrevDate}}">&#8592; Previous</a>

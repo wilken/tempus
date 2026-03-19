@@ -79,6 +79,7 @@ func main() {
 		r.Post("/day/{date}/save", pageH.SaveDay)
 		r.Get("/week/{date}", pageH.Week)
 		r.Get("/export/week", pageH.ExportWeek)
+		r.Post("/account/delete", authH.DeleteAccount)
 	})
 
 	log.Printf("Server running at http://localhost:%s", port)

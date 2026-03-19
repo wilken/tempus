@@ -1,0 +1,57 @@
+{{define "header"}}
+<header>
+    <h1>Tempus fugit</h1>
+    <div class="header-right">
+        <div class="user-menu">
+            <button class="user-menu-toggle" onclick="toggleUserMenu()" aria-haspopup="true">
+                {{.UserName}} ▾
+            </button>
+            <div class="user-menu-panel" id="user-menu-panel">
+                <a href="/logout">Sign out</a>
+                <button class="menu-item-danger" onclick="openDeleteModal()">Delete account…</button>
+            </div>
+        </div>
+    </div>
+</header>
+
+<div class="modal-backdrop" id="delete-modal" onclick="backdropClick(event)">
+    <div class="modal">
+        <h2>Delete account &amp; all data?</h2>
+        <p>This will permanently delete your account and all time entries. This action cannot be undone.</p>
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeDeleteModal()">Cancel</button>
+            <form method="POST" action="/account/delete" style="display:inline">
+                <button type="submit" class="btn-danger">Delete everything</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function toggleUserMenu() {
+        document.getElementById('user-menu-panel').classList.toggle('open');
+    }
+    function openDeleteModal() {
+        document.getElementById('user-menu-panel').classList.remove('open');
+        document.getElementById('delete-modal').classList.add('open');
+    }
+    function closeDeleteModal() {
+        document.getElementById('delete-modal').classList.remove('open');
+    }
+    function backdropClick(e) {
+        if (e.target === document.getElementById('delete-modal')) closeDeleteModal();
+    }
+    document.addEventListener('click', function(e) {
+        const panel = document.getElementById('user-menu-panel');
+        if (panel.classList.contains('open') && !e.target.closest('.user-menu')) {
+            panel.classList.remove('open');
+        }
+    });
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            document.getElementById('user-menu-panel').classList.remove('open');
+            closeDeleteModal();
+        }
+    });
+</script>
+{{end}}

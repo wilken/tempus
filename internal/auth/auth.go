@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"html/template"
+	"log"
 	"net/http"
 
 	"github.com/gorilla/sessions"
@@ -96,6 +97,23 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 	sess.Options.MaxAge = -1
 	sess.Save(r, w)
 	http.Redirect(w, r, "/login", http.StatusFound)
+}
+
+func (h *Handler) DeleteAccount(w http.ResponseWriter, r *http.Request) {
+	sess, _ := h.Store.Get(r, sessionName)
+	userID, ok := sess.Values["user_id"].(string)
+	if !ok || userID == "" {
+		http.Redirect(w, r, "/login", http.StatusFound)
+		return
+	}
+	if err := h.DB.DeleteUser(userID); err != nil {
+		log.Printf("DeleteUser error: %v", err)
+		http.Error(w, "failed to delete account", http.StatusInternalServerError)
+		return
+	}
+	sess.Options.MaxAge = -1
+	sess.Save(r, w)
+	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }
 
 func (h *Handler) Middleware(next http.Handler) http.Handler {

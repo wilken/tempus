@@ -25,7 +25,8 @@
 | `internal/db/db.go`               | SQLite schema, DB/User/TimeEntry types, CRUD             |
 | `internal/auth/auth.go`           | Google OAuth flow, session middleware, context keys      |
 | `internal/handlers/handlers.go`   | HTTP handlers + Excel builder                            |
-| `templates/`                      | HTML templates (login.html, day.html, week.html)         |
+| `templates/`                      | HTML templates (login.html, day.html, week.html, header.html) |
+| `templates/header.html`           | `{{define "header"}}` partial — nav dropdown + delete modal  |
 | `internal/db/db_test.go`          | DB layer tests (in-memory SQLite)                        |
 | `internal/auth/auth_test.go`      | Auth middleware and login handler tests                  |
 | `internal/handlers/handlers_test.go` | Handler tests (httptest + chi + in-memory DB)         |
@@ -76,6 +77,13 @@ Monday–Sunday. Columns: Date | Task | Subtask | Name | Hours. Entries are grou
   ```
 - To delete files inside the volume while the container is running: `docker compose exec app sh -c "rm -f /data/tempus.db*"`
 - `docker compose cp` does not support wildcards.
+
+## Header / user menu
+
+- The header is defined once in `templates/header.html` as `{{define "header"}}` and included in `day.html` and `week.html` via `{{template "header" .}}`.
+- The username is a dropdown toggle (`▾`) revealing "Sign out" and "Delete account…".
+- "Delete account…" opens a confirmation modal (POST `/account/delete`) that permanently deletes all time entries and the user row, then expires the session.
+- `db.DeleteUser` deletes entries before the user row to satisfy the FK constraint (no CASCADE set).
 
 ## Day page UX
 

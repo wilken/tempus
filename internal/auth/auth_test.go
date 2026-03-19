@@ -7,6 +7,8 @@ import (
 	"testing"
 
 	"github.com/gorilla/sessions"
+
+	"tempus/internal/db"
 )
 
 func newTestStore() *sessions.CookieStore {
@@ -106,6 +108,72 @@ func TestLoginRedirectsWhenAlreadyLoggedIn(t *testing.T) {
 	}
 	if loc := rec.Header().Get("Location"); loc != "/" {
 		t.Errorf("expected redirect to /, got %q", loc)
+	}
+}
+
+func newTestAuthDB(t *testing.T) *db.DB {
+	t.Helper()
+	d, err := db.InitDB(":memory:")
+	if err != nil {
+		t.Fatalf("newTestAuthDB: %v", err)
+	}
+	t.Cleanup(func() { d.Close() })
+	return d
+}
+
+func TestDeleteAccountAuthenticated(t *testing.T) {
+	store := newTestStore()
+	d := newTestAuthDB(t)
+	must(t, d.UpsertUser(db.User{ID: "uid-123", Email: "a@example.com", Name: "Alice"}))
+	h := &Handler{Store: store, DB: d}
+
+	req := requestWithSession(t, store, map[interface{}]interface{}{
+		"user_id":   "uid-123",
+		"user_name": "Alice",
+	})
+	req.Method = "POST"
+	rec := httptest.NewRecorder()
+	h.DeleteAccount(rec, req)
+
+	if rec.Code != http.StatusSeeOther {
+		t.Errorf("expected 303, got %d", rec.Code)
+	}
+	if loc := rec.Header().Get("Location"); loc != "/login" {
+		t.Errorf("expected redirect to /login, got %q", loc)
+	}
+
+	// Session cookie should be expired (MaxAge=-1).
+	expired := false
+	for _, c := range rec.Result().Cookies() {
+		if c.Name == sessionName && c.MaxAge < 0 {
+			expired = true
+		}
+	}
+	if !expired {
+		t.Error("expected session cookie to be expired")
+	}
+}
+
+func TestDeleteAccountUnauthenticated(t *testing.T) {
+	store := newTestStore()
+	h := &Handler{Store: store}
+
+	req := httptest.NewRequest("POST", "/account/delete", nil) // no session
+	rec := httptest.NewRecorder()
+	h.DeleteAccount(rec, req)
+
+	if rec.Code != http.StatusFound {
+		t.Errorf("expected 302, got %d", rec.Code)
+	}
+	if loc := rec.Header().Get("Location"); loc != "/login" {
+		t.Errorf("expected redirect to /login, got %q", loc)
+	}
+}
+
+func must(t *testing.T, err error) {
+	t.Helper()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
 	}
 }
 

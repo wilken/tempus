@@ -72,6 +72,21 @@ func (db *DB) UpsertUser(u User) error {
 	return err
 }
 
+func (db *DB) DeleteUser(userID string) error {
+	tx, err := db.conn.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	if _, err := tx.Exec(`DELETE FROM time_entries WHERE user_id = ?`, userID); err != nil {
+		return err
+	}
+	if _, err := tx.Exec(`DELETE FROM users WHERE id = ?`, userID); err != nil {
+		return err
+	}
+	return tx.Commit()
+}
+
 func (db *DB) GetEntriesForDay(userID, date string) ([]TimeEntry, error) {
 	rows, err := db.conn.Query(`
 		SELECT id, user_id, date, task, subtask, hours
