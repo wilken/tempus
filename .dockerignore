@@ -1,0 +1,11 @@
+.git
+.env
+.env.docker
+tempus.db
+tempus.db-shm
+tempus.db-wal
+tempus
+tempus-week-*.xlsx
+vendor/
+.DS_Store
+*.swp

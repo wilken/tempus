@@ -1,0 +1,15 @@
+services:
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env.docker
+    environment:
+      DATABASE_PATH: /data/tempus.db
+    volumes:
+      - tempus-data:/data
+    restart: unless-stopped
+
+volumes:
+  tempus-data:
