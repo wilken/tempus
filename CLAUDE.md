@@ -12,7 +12,7 @@
 ## Architecture decisions
 
 - **Save strategy:** Replace-all for a day — on POST `/day/{date}/save`, all existing entries for that user+date are deleted and the submitted rows are inserted in a single transaction. Simplest possible approach.
-- **Auto-save:** The day page saves automatically via `fetch` (no page reload) when the user tabs out of the hours field or deletes a row. There is no manual save button.
+- **Auto-save:** The day page saves automatically via `fetch` (no page reload) when the user tabs out of the hours field or deletes a row. A manual Save button is also present but disabled until the form is dirty and has at least one complete row.
 - **No CGo:** `modernc.org/sqlite` was chosen specifically to avoid CGo dependencies, making cross-compilation easy.
 - **Standard Go layout:** `cmd/` for the entry point; `internal/` sub-packages for domain logic. Dependencies injected via struct fields — no global variables.
 - **Context keys:** `auth.ContextKey` exported string type; constants `auth.CtxUserID` / `auth.CtxUserName` set by middleware and read by handlers without circular imports.
@@ -89,7 +89,7 @@ Monday–Sunday. Columns: Date | Task | Subtask | Name | Hours. Entries are grou
 
 - Tab out of the hours field auto-saves and adds a new row (last row only).
 - Deleting a row auto-saves immediately.
-- Task and subtask fields show autocomplete suggestions from the 5 days prior to the viewed date, plus anything entered earlier in the current session.
+- Task and subtask fields show autocomplete suggestions from the 10 days prior to the viewed date, plus anything entered earlier in the current session.
 - Subtask suggestions are filtered to match the task in the same row.
 - A toast notification confirms saves and shows errors if the connection is lost.
 - "View week" link navigates to `/week/{date}`.
