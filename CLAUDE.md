@@ -76,7 +76,6 @@ Monday–Sunday. Columns: Date | Task | Subtask | Name | Hours. Entries are grou
   docker compose restart app
   ```
 - To delete files inside the volume while the container is running: `docker compose exec app sh -c "rm -f /data/tempus.db*"`
-- `docker compose cp` does not support wildcards.
 
 ## Header / user menu
 
