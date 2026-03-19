@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -59,6 +60,7 @@ func (h *Handler) Day(w http.ResponseWriter, r *http.Request) {
 
 	entries, err := h.DB.GetEntriesForDay(userID, dateStr)
 	if err != nil {
+		log.Printf("GetEntriesForDay error: %v", err)
 		http.Error(w, "database error", http.StatusInternalServerError)
 		return
 	}
@@ -129,6 +131,7 @@ func (h *Handler) SaveDay(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.DB.ReplaceEntriesForDay(userID, dateStr, entries); err != nil {
+		log.Printf("ReplaceEntriesForDay error: %v", err)
 		http.Error(w, "database error", http.StatusInternalServerError)
 		return
 	}
@@ -170,6 +173,7 @@ func (h *Handler) Week(w http.ResponseWriter, r *http.Request) {
 
 	entries, err := h.DB.GetEntriesForWeek(userID, monday.Format("2006-01-02"), sunday.Format("2006-01-02"))
 	if err != nil {
+		log.Printf("GetEntriesForWeek error: %v", err)
 		http.Error(w, "database error", http.StatusInternalServerError)
 		return
 	}
@@ -227,6 +231,7 @@ func (h *Handler) ExportWeek(w http.ResponseWriter, r *http.Request) {
 		sunday.Format("2006-01-02"),
 	)
 	if err != nil {
+		log.Printf("GetEntriesForWeek (export) error: %v", err)
 		http.Error(w, "database error", http.StatusInternalServerError)
 		return
 	}

@@ -62,6 +62,21 @@ Read-only single table with columns Task | Subtask | Hours, with a blue "Daily t
 
 Monday–Sunday. Columns: Date | Task | Subtask | Name | Hours. Entries are grouped by day with daily totals and a week total row at the bottom. File name: `{username}-week-YYYY-MM-DD.xlsx` (Monday date; spaces in username replaced with `_`).
 
+## Docker
+
+- Uses a named volume `tempus-data` mounted at `/data` for the SQLite database.
+- The container runs as a non-root `tempus` user — files copied into `/data` via `docker compose cp` will be owned by root and cause a "readonly database" error on startup. Always copy all three SQLite files (`.db`, `.db-wal`, `.db-shm`) together to keep WAL state consistent.
+- To migrate an existing database, copy all three SQLite files together (`.db`, `.db-wal`, `.db-shm`) to keep WAL state consistent, then fix ownership:
+  ```bash
+  docker compose cp tempus.db app:/data/tempus.db
+  docker compose cp tempus.db-wal app:/data/tempus.db-wal
+  docker compose cp tempus.db-shm app:/data/tempus.db-shm
+  docker run --rm -v tempus_tempus-data:/data alpine chown -R 100:101 /data
+  docker compose restart app
+  ```
+- To delete files inside the volume while the container is running: `docker compose exec app sh -c "rm -f /data/tempus.db*"`
+- `docker compose cp` does not support wildcards.
+
 ## Day page UX
 
 - Tab out of the hours field auto-saves and adds a new row (last row only).
