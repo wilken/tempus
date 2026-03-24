@@ -65,17 +65,18 @@ Monday–Sunday. Columns: Date | Task | Subtask | Name | Hours. Entries are grou
 
 ## Docker
 
-- Uses a named volume `tempus-data` mounted at `/data` for the SQLite database.
-- The container runs as a non-root `tempus` user — files copied into `/data` via `docker compose cp` will be owned by root and cause a "readonly database" error on startup. Always copy all three SQLite files (`.db`, `.db-wal`, `.db-shm`) together to keep WAL state consistent.
+- Uses a named volume `storage` mounted at `/storage` for the SQLite database.
+- The app is exposed on host port 80 (mapped to container port 8080).
+- The container runs as a non-root `tempus` user — files copied into `/storage` via `docker compose cp` will be owned by root and cause a "readonly database" error on startup. Always copy all three SQLite files (`.db`, `.db-wal`, `.db-shm`) together to keep WAL state consistent.
 - To migrate an existing database, copy all three SQLite files together (`.db`, `.db-wal`, `.db-shm`) to keep WAL state consistent, then fix ownership:
   ```bash
-  docker compose cp tempus.db app:/data/tempus.db
-  docker compose cp tempus.db-wal app:/data/tempus.db-wal
-  docker compose cp tempus.db-shm app:/data/tempus.db-shm
-  docker run --rm -v tempus_tempus-data:/data alpine chown -R 100:101 /data
+  docker compose cp tempus.db app:/storage/tempus.db
+  docker compose cp tempus.db-wal app:/storage/tempus.db-wal
+  docker compose cp tempus.db-shm app:/storage/tempus.db-shm
+  docker run --rm -v tempus_storage:/storage alpine chown -R 100:101 /storage
   docker compose restart app
   ```
-- To delete files inside the volume while the container is running: `docker compose exec app sh -c "rm -f /data/tempus.db*"`
+- To delete files inside the volume while the container is running: `docker compose exec app sh -c "rm -f /storage/tempus.db*"`
 
 ## Header / user menu
 

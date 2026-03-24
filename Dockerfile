@@ -17,9 +17,9 @@ COPY --from=builder /build/tempus ./
 COPY templates/ templates/
 COPY static/    static/
 
-RUN mkdir -p /data && \
+RUN mkdir -p /storage && \
     addgroup -S tempus && adduser -S tempus -G tempus && \
-    chown -R tempus:tempus /app /data
+    chown -R tempus:tempus /app /storage
 USER tempus
 
 EXPOSE 8080

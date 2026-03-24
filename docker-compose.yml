@@ -3,14 +3,14 @@ services:
     image: ghcr.io/wilken/tempus:latest
     build: .
     ports:
-      - "8080:8080"
+      - "80:8080"
     env_file:
       - .env.docker
     environment:
-      DATABASE_PATH: /data/tempus.db
+      DATABASE_PATH: /storage/tempus.db
     volumes:
-      - tempus-data:/data
+      - storage:/storage
     restart: unless-stopped
 
 volumes:
-  tempus-data:
+  storage:
