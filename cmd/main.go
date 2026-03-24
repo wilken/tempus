@@ -64,6 +64,11 @@ func main() {
 	// Static files
 	r.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
+	// Health check
+	r.Get("/up", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("ok"))
+	})
+
 	// Public
 	r.Get("/login", authH.Login)
 	r.Get("/auth/google", authH.GoogleAuth)
