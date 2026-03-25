@@ -124,6 +124,19 @@ header h1 {
     font-size: 1.15rem;
     font-weight: 600;
 }
+@media (max-width: 480px) {
+    .page-nav {
+        flex-wrap: wrap;
+        justify-content: space-between;
+        row-gap: 0;
+    }
+    .page-nav h2 {
+        order: -1;
+        width: 100%;
+        text-align: center;
+        padding-bottom: 10px;
+    }
+}
 .nav-btn {
     display: inline-flex;
     align-items: center;
