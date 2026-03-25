@@ -1,66 +1,67 @@
 /* ─── Design tokens ───────────────────────────────────────── */
+/*hello*/
 :root {
-    --bg:           #f5f7fa;
-    --surface:      #ffffff;
-    --surface-alt:  #fafafa;
-    --stripe:       #f4f5fa;
-    --text:         #1a1a1a;
-    --text-muted:   #666;
-    --text-subtle:  #888;
-    --text-nav:     #555;
-    --border:       #e8eaed;
+    --bg: #f5f7fa;
+    --surface: #ffffff;
+    --surface-alt: #fafafa;
+    --stripe: #f4f5fa;
+    --text: #1a1a1a;
+    --text-muted: #666;
+    --text-subtle: #888;
+    --text-nav: #555;
+    --border: #e8eaed;
     --border-light: #f0f0f0;
-    --accent:       #4285f4;
+    --accent: #4285f4;
     --accent-hover: #1a73e8;
-    --accent-ring:  rgba(66, 133, 244, 0.12);
+    --accent-ring: rgba(66, 133, 244, 0.12);
     --nav-btn-text: #444;
     --nav-btn-hover-bg: #f0f4ff;
     --nav-btn-hover-border: #b3c2f0;
     --input-hover-border: #dadce0;
-    --btn-disabled-bg:    #dadce0;
-    --btn-disabled-text:  #aaa;
-    --btn-delete-color:   #bbb;
-    --btn-delete-hover:   #e53935;
-    --shadow:       rgba(0, 0, 0, 0.07);
+    --btn-disabled-bg: #dadce0;
+    --btn-disabled-text: #aaa;
+    --btn-delete-color: #bbb;
+    --btn-delete-hover: #e53935;
+    --shadow: rgba(0, 0, 0, 0.07);
     --shadow-login: rgba(0, 0, 0, 0.08);
-    --toast-ok-bg:     #e6f4ea;
-    --toast-ok-text:   #1e6e2e;
+    --toast-ok-bg: #e6f4ea;
+    --toast-ok-text: #1e6e2e;
     --toast-ok-border: #81c995;
-    --toast-err-bg:     #fce8e6;
-    --toast-err-text:   #c62828;
+    --toast-err-bg: #fce8e6;
+    --toast-err-text: #c62828;
     --toast-err-border: #e57373;
 }
 
 @media (prefers-color-scheme: dark) {
     :root {
-        --bg:           #111113;
-        --surface:      #1e1f22;
-        --surface-alt:  #26272b;
-        --stripe:       #25262a;
-        --text:         #e8eaed;
-        --text-muted:   #999;
-        --text-subtle:  #666;
-        --text-nav:     #aaa;
-        --border:       #2e2f33;
+        --bg: #111113;
+        --surface: #1e1f22;
+        --surface-alt: #26272b;
+        --stripe: #25262a;
+        --text: #e8eaed;
+        --text-muted: #999;
+        --text-subtle: #666;
+        --text-nav: #aaa;
+        --border: #2e2f33;
         --border-light: #2a2b2f;
-        --accent:       #8ab4f8;
+        --accent: #8ab4f8;
         --accent-hover: #aecbfa;
-        --accent-ring:  rgba(138, 180, 248, 0.15);
+        --accent-ring: rgba(138, 180, 248, 0.15);
         --nav-btn-text: #ccc;
-        --nav-btn-hover-bg:     #1e2a3a;
+        --nav-btn-hover-bg: #1e2a3a;
         --nav-btn-hover-border: #4a6080;
         --input-hover-border: #444;
-        --btn-disabled-bg:   #333;
+        --btn-disabled-bg: #333;
         --btn-disabled-text: #666;
-        --btn-delete-color:  #555;
-        --btn-delete-hover:  #ef5350;
-        --shadow:       rgba(0, 0, 0, 0.4);
+        --btn-delete-color: #555;
+        --btn-delete-hover: #ef5350;
+        --shadow: rgba(0, 0, 0, 0.4);
         --shadow-login: rgba(0, 0, 0, 0.5);
-        --toast-ok-bg:     #1b3a23;
-        --toast-ok-text:   #81c995;
+        --toast-ok-bg: #1b3a23;
+        --toast-ok-text: #81c995;
         --toast-ok-border: #2d6a3f;
-        --toast-err-bg:     #3b1a1a;
-        --toast-err-text:   #e57373;
+        --toast-err-bg: #3b1a1a;
+        --toast-err-text: #e57373;
         --toast-err-border: #6d2626;
     }
 }
@@ -413,7 +414,9 @@ input[type="number"]:focus {
     display: flex;
     align-items: center;
     gap: 4px;
-    transition: background 0.1s, color 0.1s;
+    transition:
+        background 0.1s,
+        color 0.1s;
 }
 .user-menu-toggle:hover {
     background: var(--stripe);
