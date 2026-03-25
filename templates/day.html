@@ -160,6 +160,10 @@
             }
 
             function addRow() {
+              if (dirty) {
+                document.querySelectorAll('#entries tr').forEach(learnFromRow);
+                saveForm();
+              }
               const tbody = document.getElementById('entries');
               const tr = document.createElement('tr');
               tr.innerHTML = `
