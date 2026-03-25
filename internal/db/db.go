@@ -34,7 +34,7 @@ func InitDB(path string) (*DB, error) {
 	if err != nil {
 		return nil, err
 	}
-	if _, err := conn.Exec(`PRAGMA journal_mode=WAL`); err != nil {
+	if _, err := conn.Exec(`PRAGMA journal_mode=WAL; PRAGMA busy_timeout=5000`); err != nil {
 		return nil, err
 	}
 	schema := `
