@@ -228,9 +228,11 @@
                   showToast('Saved', 'ok');
                   markClean();
                 } else {
-                  showToast('Server error — changes may not be saved', 'err');
+                  markDirty();
+                  showToast('Server error — changes not saved', 'err');
                 }
               } catch {
+                markDirty();
                 showToast('Connection lost — changes not saved', 'err');
               }
             }
