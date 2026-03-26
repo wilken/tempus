@@ -30,10 +30,7 @@
                                 <th></th>
                             </tr>
                         </thead>
-                        <datalist id="task-list">
-                            {{range .TaskSuggestions}}
-                            <option value="{{.}}">{{end}}</option>
-                        </datalist>
+                        <datalist id="task-list"></datalist>
                         <datalist id="subtask-list"></datalist>
                         <tbody id="entries">
                             {{range .Entries}}
@@ -45,6 +42,7 @@
                                         value="{{.Task}}"
                                         placeholder="Task name"
                                         list="task-list"
+                                        onfocus="updateTaskSuggestions()"
                                         oninput="
                                             updateSubtaskSuggestions(
                                                 this.closest('tr'),
@@ -120,6 +118,7 @@
         </div>
 
         <script>
+            const taskSuggestions = {{.TaskSuggestionsJS}};
             const subtasksByTask = {{.SubtasksByTask}};
 
             let dirty = false;
@@ -147,6 +146,16 @@
               updateSaveButton();
             }
 
+            function updateTaskSuggestions() {
+              const datalist = document.getElementById('task-list');
+              datalist.innerHTML = '';
+              taskSuggestions.forEach(function(t) {
+                const opt = document.createElement('option');
+                opt.value = t;
+                datalist.appendChild(opt);
+              });
+            }
+
             function updateSubtaskSuggestions(row) {
               const task = row.querySelector('input[name="task"]').value;
               const subtasks = subtasksByTask[task] || [];
@@ -167,7 +176,7 @@
               const tbody = document.getElementById('entries');
               const tr = document.createElement('tr');
               tr.innerHTML = `
-                <td><input type="text" name="task" placeholder="Task name" list="task-list" oninput="updateSubtaskSuggestions(this.closest('tr'))"></td>
+                <td><input type="text" name="task" placeholder="Task name" list="task-list" onfocus="updateTaskSuggestions()" oninput="updateSubtaskSuggestions(this.closest('tr'))"></td>
                 <td><input type="text" name="subtask" placeholder="Subtask (optional)" list="subtask-list" onfocus="updateSubtaskSuggestions(this.closest('tr'))"></td>
                 <td class="col-hours"><input type="number" name="hours" min="0.25" max="24" step="0.25" placeholder="0" onkeydown="hoursTab(event)"></td>
                 <td><button type="button" class="btn-delete" tabindex="-1" onclick="deleteRow(this)" title="Remove row">&#215;</button></td>
@@ -230,12 +239,9 @@
               const task = row.querySelector('input[name="task"]').value.trim();
               const subtask = row.querySelector('input[name="subtask"]').value.trim();
               if (!task) return;
-              // Add task to datalist if not already present.
-              const taskList = document.getElementById('task-list');
-              if (!Array.from(taskList.options).some(o => o.value === task)) {
-                const opt = document.createElement('option');
-                opt.value = task;
-                taskList.insertBefore(opt, taskList.firstChild);
+              // Add task to suggestions array if not already present.
+              if (!taskSuggestions.includes(task)) {
+                taskSuggestions.unshift(task);
               }
               // Add subtask to the map if not already present.
               if (subtask) {

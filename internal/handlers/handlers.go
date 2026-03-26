@@ -43,8 +43,9 @@ type DayPageData struct {
 	UserName        string
 	Entries         []db.TimeEntry
 	TotalHours      float64
-	TaskSuggestions []string
-	SubtasksByTask  template.JS
+	TaskSuggestions   []string
+	TaskSuggestionsJS template.JS
+	SubtasksByTask    template.JS
 }
 
 func (h *Handler) Day(w http.ResponseWriter, r *http.Request) {
@@ -72,19 +73,21 @@ func (h *Handler) Day(w http.ResponseWriter, r *http.Request) {
 
 	since := date.AddDate(0, 0, -10).Format("2006-01-02")
 	tasks, _ := h.DB.GetRecentTasks(userID, since)
+	taskJSON, _ := json.Marshal(tasks)
 	subtaskMap, _ := h.DB.GetRecentSubtasksByTask(userID, since)
 	subtaskJSON, _ := json.Marshal(subtaskMap)
 
 	h.renderTemplate(w, "day.html", DayPageData{
-		Date:            dateStr,
-		DateFormatted:   date.Format("Monday, January 2, 2006"),
-		PrevDate:        date.AddDate(0, 0, -1).Format("2006-01-02"),
-		NextDate:        date.AddDate(0, 0, 1).Format("2006-01-02"),
-		UserName:        userName,
-		Entries:         entries,
-		TotalHours:      total,
-		TaskSuggestions: tasks,
-		SubtasksByTask:  template.JS(subtaskJSON),
+		Date:              dateStr,
+		DateFormatted:     date.Format("Monday, January 2, 2006"),
+		PrevDate:          date.AddDate(0, 0, -1).Format("2006-01-02"),
+		NextDate:          date.AddDate(0, 0, 1).Format("2006-01-02"),
+		UserName:          userName,
+		Entries:           entries,
+		TotalHours:        total,
+		TaskSuggestions:   tasks,
+		TaskSuggestionsJS: template.JS(taskJSON),
+		SubtasksByTask:    template.JS(subtaskJSON),
 	})
 }
 
