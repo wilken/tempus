@@ -3,9 +3,14 @@ package db
 import (
 	"database/sql"
 	"fmt"
+	"time"
 
 	_ "modernc.org/sqlite"
 )
+
+// autocompleteDays is the number of days before the viewed date to include in
+// task and subtask autocomplete suggestions.
+const autocompleteDays = 10
 
 // DB wraps the sql.DB connection.
 type DB struct {
@@ -142,12 +147,14 @@ func (db *DB) ReplaceEntriesForDay(userID, date string, entries []TimeEntry) err
 }
 
 // GetRecentTasks returns distinct task names used by the user on or after since.
-func (db *DB) GetRecentTasks(userID, since string) ([]string, error) {
+func (db *DB) GetRecentTasks(userID string, date time.Time) ([]string, error) {
+	since := date.AddDate(0, 0, -autocompleteDays).Format("2006-01-02")
+	until := date.Format("2006-01-02")
 	rows, err := db.conn.Query(`
 		SELECT task FROM time_entries
-		WHERE user_id = ? AND date >= ? AND task != ''
+		WHERE user_id = ? AND date >= ? AND date <= ? AND task != ''
 		GROUP BY task
-		ORDER BY MAX(date) DESC, MAX(created_at) DESC`, userID, since)
+		ORDER BY MAX(date) DESC, MAX(created_at) DESC`, userID, since, until)
 	if err != nil {
 		return nil, err
 	}
@@ -155,13 +162,15 @@ func (db *DB) GetRecentTasks(userID, since string) ([]string, error) {
 	return scanStrings(rows)
 }
 
-// GetRecentSubtasksByTask returns distinct subtasks grouped by task used on or after since.
-func (db *DB) GetRecentSubtasksByTask(userID, since string) (map[string][]string, error) {
+// GetRecentSubtasksByTask returns distinct subtasks grouped by task from the 10 days up to and including date.
+func (db *DB) GetRecentSubtasksByTask(userID string, date time.Time) (map[string][]string, error) {
+	since := date.AddDate(0, 0, -autocompleteDays).Format("2006-01-02")
+	until := date.Format("2006-01-02")
 	rows, err := db.conn.Query(`
 		SELECT task, subtask FROM time_entries
-		WHERE user_id = ? AND date >= ? AND subtask != ''
+		WHERE user_id = ? AND date >= ? AND date <= ? AND subtask != ''
 		GROUP BY task, subtask
-		ORDER BY task, MAX(date) DESC, MAX(created_at) DESC`, userID, since)
+		ORDER BY task, MAX(date) DESC, MAX(created_at) DESC`, userID, since, until)
 	if err != nil {
 		return nil, err
 	}

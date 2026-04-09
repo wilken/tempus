@@ -71,13 +71,12 @@ func (h *Handler) Day(w http.ResponseWriter, r *http.Request) {
 		total += e.Hours
 	}
 
-	since := date.AddDate(0, 0, -10).Format("2006-01-02")
-	tasks, _ := h.DB.GetRecentTasks(userID, since)
+	tasks, _ := h.DB.GetRecentTasks(userID, date)
 	if tasks == nil {
 		tasks = []string{}
 	}
 	taskJSON, _ := json.Marshal(tasks)
-	subtaskMap, _ := h.DB.GetRecentSubtasksByTask(userID, since)
+	subtaskMap, _ := h.DB.GetRecentSubtasksByTask(userID, date)
 	if subtaskMap == nil {
 		subtaskMap = map[string][]string{}
 	}
