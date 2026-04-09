@@ -260,6 +260,35 @@ func TestBuildExcel(t *testing.T) {
 	}
 }
 
+// TestDayEmptyAutocompleteNotNull ensures that when a user has no recent time
+// entries, the autocomplete JS variables are serialised as [] and {} rather
+// than null, which would cause a runtime error when forEach is called on them.
+func TestDayEmptyAutocompleteNotNull(t *testing.T) {
+	jsTmpl := template.Must(template.New("day.html").Parse(
+		`{{.TaskSuggestionsJS}}|{{.SubtasksByTask}}`,
+	))
+	h := &Handler{DB: newTestDB(t), Tmpl: jsTmpl}
+	req := httptest.NewRequest("GET", "/day/2024-01-15", nil)
+	req = withAuth(req, "u1", "Alice")
+	req = withChiParam(req, "date", "2024-01-15")
+	rec := httptest.NewRecorder()
+	h.Day(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", rec.Code)
+	}
+	body := rec.Body.String()
+	if strings.Contains(body, "null") {
+		t.Errorf("autocomplete data contains null — forEach will throw; got: %q", body)
+	}
+	if !strings.Contains(body, "[]") {
+		t.Errorf("expected task suggestions to be [], got: %q", body)
+	}
+	if !strings.Contains(body, "{}") {
+		t.Errorf("expected subtasks map to be {}, got: %q", body)
+	}
+}
+
 func TestMondayOf(t *testing.T) {
 	cases := []struct {
 		input string

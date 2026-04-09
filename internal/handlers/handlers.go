@@ -73,8 +73,14 @@ func (h *Handler) Day(w http.ResponseWriter, r *http.Request) {
 
 	since := date.AddDate(0, 0, -10).Format("2006-01-02")
 	tasks, _ := h.DB.GetRecentTasks(userID, since)
+	if tasks == nil {
+		tasks = []string{}
+	}
 	taskJSON, _ := json.Marshal(tasks)
 	subtaskMap, _ := h.DB.GetRecentSubtasksByTask(userID, since)
+	if subtaskMap == nil {
+		subtaskMap = map[string][]string{}
+	}
 	subtaskJSON, _ := json.Marshal(subtaskMap)
 
 	h.renderTemplate(w, "day.html", DayPageData{
