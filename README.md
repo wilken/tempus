@@ -46,6 +46,8 @@ The app will be available at <http://localhost> (port 80).
 
 The database is stored in a Docker named volume called `storage`, mounted at `/storage` inside the container.
 
+This makes it compliant with Basecamp Once https://github.com/basecamp/once
+
 ### Migrating an existing database into Docker
 
 Copy all three SQLite files together to preserve WAL state, then fix ownership so the container user can write to them:
