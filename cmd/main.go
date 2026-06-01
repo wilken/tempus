@@ -18,7 +18,7 @@ import (
 )
 
 func main() {
-	sessionSecret := getEnv("SESSION_SECRET", "dev-secret-change-in-production")
+	sessionSecret := requireEnv("SESSION_SECRET")
 	dbPath := getEnv("DATABASE_PATH", "tempus.db")
 	port := getEnv("PORT", "8080")
 
@@ -35,6 +35,7 @@ func main() {
 		Path:     "/",
 		MaxAge:   86400 * 30,
 		HttpOnly: true,
+		Secure:   true, // only send cookie over HTTPS
 		SameSite: http.SameSiteLaxMode,
 	}
 
@@ -60,6 +61,7 @@ func main() {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
+	r.Use(securityHeaders)
 
 	// Static files
 	r.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
@@ -107,4 +109,24 @@ func requireEnv(key string) string {
 		log.Fatalf("required environment variable %q is not set", key)
 	}
 	return v
+}
+
+// securityHeaders adds standard HTTP security headers to every response.
+func securityHeaders(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Enforce HTTPS for 1 year, including subdomains.
+		w.Header().Set("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+		// Prevent MIME-type sniffing.
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		// Disallow embedding in iframes (clickjacking protection).
+		w.Header().Set("X-Frame-Options", "DENY")
+		// Don't leak the full URL as referrer when navigating away.
+		w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
+		// CSP: only load resources from self. unsafe-inline is required
+		// because JS and styles are currently inline; tighten this if they
+		// are ever moved to separate files.
+		w.Header().Set("Content-Security-Policy",
+			"default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:")
+		next.ServeHTTP(w, r)
+	})
 }

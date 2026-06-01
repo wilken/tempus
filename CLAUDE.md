@@ -25,7 +25,7 @@
 | `internal/db/db.go`               | SQLite schema, DB/User/TimeEntry types, CRUD             |
 | `internal/auth/auth.go`           | Google OAuth flow, session middleware, context keys      |
 | `internal/handlers/handlers.go`   | HTTP handlers + Excel builder                            |
-| `templates/`                      | HTML templates (login.html, day.html, week.html, header.html) |
+| `templates/`                      | HTML templates (login.html, day.html, week.html, range.html, header.html) |
 | `templates/header.html`           | `{{define "header"}}` partial — nav dropdown + delete modal  |
 | `internal/db/db_test.go`          | DB layer tests (in-memory SQLite)                        |
 | `internal/auth/auth_test.go`      | Auth middleware and login handler tests                  |
@@ -55,13 +55,23 @@ time_entries(id INT PK, user_id TEXT, date TEXT, task TEXT, subtask TEXT, hours 
 
 Date is stored as `YYYY-MM-DD` text.
 
-## Week view (`/week/{date}`)
+## Range view (`/range/{start}/{end}`)
 
-Read-only single table with columns Task | Subtask | Hours, with a blue "Daily total" row after each day and a "Week total" at the bottom. Any date in the week resolves to Monday. Day headings (links back to the day edit page) are shown as a row spanning all columns above each day's entries. Previous/Next week navigation at top; "Go to today" and "Export to Excel" links at bottom.
+Generic read-only view for any inclusive date range. Renders the same table (Task | Subtask | Hours) with daily totals and a grand total. Day headings link back to the day edit page. Previous/Next navigation shifts by the range duration, except when the range is a whole calendar month — in that case it navigates by calendar month. Export link downloads an Excel file for the range.
 
-## Week export
+- `/week/{date}` — redirects to the Mon–Sun range containing the date
+- `/month/{date}` — redirects to the first–last day of the calendar month containing the date
 
-Monday–Sunday. Columns: Date | Task | Subtask | Name | Hours. Entries are grouped by day with daily totals and a week total row at the bottom. File name: `{username}-week-YYYY-MM-DD.xlsx` (Monday date; spaces in username replaced with `_`).
+## Range export (`/export/range?start=…&end=…`)
+
+Columns: Date | Task | Subtask | Name | Hours. Grouped by day with a "Total" row at the bottom. File name: `{username}-{start}-{end}.xlsx` (spaces in username replaced with `_`). `/export/week?date=…` redirects to this endpoint.
+
+## Security
+
+- `SESSION_SECRET` is required (no default) — generate with `openssl rand -base64 32`.
+- Session cookie is `Secure` (HTTPS only) and `HttpOnly`. Local HTTP dev requires unsetting `Secure` or using a TLS proxy.
+- `securityHeaders` middleware in `cmd/main.go` sets HSTS, CSP, X-Frame-Options, X-Content-Type-Options, and Referrer-Policy on every response.
+- `json.Marshal` is used deliberately in the Day handler for autocomplete data — it escapes `<`, `>`, `&` as unicode escapes, which is required for safe injection into `<script>` blocks via `template.JS`. Do not replace it with an encoder that skips this escaping.
 
 ## Docker
 
@@ -80,7 +90,7 @@ Monday–Sunday. Columns: Date | Task | Subtask | Name | Hours. Entries are grou
 
 ## Header / user menu
 
-- The header is defined once in `templates/header.html` as `{{define "header"}}` and included in `day.html` and `week.html` via `{{template "header" .}}`.
+- The header is defined once in `templates/header.html` as `{{define "header"}}` and included in `day.html`, `week.html`, and `range.html` via `{{template "header" .}}`.
 - The username is a dropdown toggle (`▾`) revealing "Sign out" and "Delete account…".
 - "Delete account…" opens a confirmation modal (POST `/account/delete`) that permanently deletes all time entries and the user row, then expires the session.
 - `db.DeleteUser` deletes entries before the user row to satisfy the FK constraint (no CASCADE set).
@@ -92,4 +102,4 @@ Monday–Sunday. Columns: Date | Task | Subtask | Name | Hours. Entries are grou
 - Task and subtask fields show autocomplete suggestions from the 10 days prior to the viewed date, plus anything entered earlier in the current session.
 - Subtask suggestions are filtered to match the task in the same row.
 - A toast notification confirms saves and shows errors if the connection is lost.
-- "View week" link navigates to `/week/{date}`.
+- "View week" link navigates to `/week/{date}`; "View month" navigates to `/month/{date}`.

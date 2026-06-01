@@ -75,6 +75,9 @@ func (h *Handler) Day(w http.ResponseWriter, r *http.Request) {
 	if tasks == nil {
 		tasks = []string{}
 	}
+	// json.Marshal escapes <, >, and & as unicode escapes, making it safe
+	// to inject directly into a <script> block via template.JS.
+	// Do not replace json.Marshal with an encoder that skips this escaping.
 	taskJSON, _ := json.Marshal(tasks)
 	subtaskMap, _ := h.DB.GetRecentSubtasksByTask(userID, date)
 	if subtaskMap == nil {
