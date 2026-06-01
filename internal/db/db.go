@@ -108,7 +108,7 @@ func (db *DB) GetEntriesForDay(userID, date string) ([]TimeEntry, error) {
 	return scanEntries(rows)
 }
 
-func (db *DB) GetEntriesForWeek(userID, startDate, endDate string) ([]TimeEntry, error) {
+func (db *DB) GetEntriesInRange(userID, startDate, endDate string) ([]TimeEntry, error) {
 	rows, err := db.conn.Query(`
 		SELECT id, user_id, date, task, subtask, hours
 		FROM time_entries

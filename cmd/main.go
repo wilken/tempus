@@ -83,7 +83,10 @@ func main() {
 		r.Get("/day/{date}", pageH.Day)
 		r.Post("/day/{date}/save", pageH.SaveDay)
 		r.Get("/week/{date}", pageH.Week)
+		r.Get("/month/{date}", pageH.Month)
+		r.Get("/range/{start}/{end}", pageH.DateRange)
 		r.Get("/export/week", pageH.ExportWeek)
+		r.Get("/export/range", pageH.ExportRange)
 		r.Post("/account/delete", authH.DeleteAccount)
 	})
 

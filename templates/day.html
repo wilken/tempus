@@ -110,9 +110,14 @@
                 </div>
 
                 <div class="actions">
-                    <a class="btn-export" href="/week/{{.Date}}">
-                        &#128197; View week
-                    </a>
+                    <div class="actions-group">
+                        <a class="btn-export" href="/week/{{.Date}}">
+                            &#128197; View week
+                        </a>
+                        <a class="btn-export" href="/month/{{.Date}}">
+                            &#128197; View month
+                        </a>
+                    </div>
                     <button type="button" id="btn-save" class="btn-save" disabled onclick="saveForm()">Save</button>
                 </div>
             </form>

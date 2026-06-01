@@ -160,7 +160,7 @@ func TestDeleteUser(t *testing.T) {
 	must(t, d.UpsertUser(User{ID: "u1", Email: "a@example.com", Name: "Alice"}))
 }
 
-func TestGetEntriesForWeek(t *testing.T) {
+func TestGetEntriesInRange(t *testing.T) {
 	d := newTestDB(t)
 	must(t, d.UpsertUser(User{ID: "u1", Email: "a@example.com", Name: "Alice"}))
 
@@ -172,7 +172,7 @@ func TestGetEntriesForWeek(t *testing.T) {
 	}
 
 	// Range 2024-01-14 to 2024-01-15 should return only the first two.
-	entries, err := d.GetEntriesForWeek("u1", "2024-01-14", "2024-01-15")
+	entries, err := d.GetEntriesInRange("u1", "2024-01-14", "2024-01-15")
 	must(t, err)
 	if len(entries) != 2 {
 		t.Fatalf("expected 2 entries in range, got %d", len(entries))

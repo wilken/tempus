@@ -146,7 +146,7 @@ func (h *Handler) SaveDay(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/day/"+dateStr, http.StatusSeeOther)
 }
 
-// DayGroup holds entries for a single day, used by the week view.
+// DayGroup holds entries for a single day, used by the range view.
 type DayGroup struct {
 	Date          string
 	DateFormatted string
@@ -154,17 +154,21 @@ type DayGroup struct {
 	Total         float64
 }
 
-// WeekPageData is the view model for the week view page.
-type WeekPageData struct {
-	WeekLabel  string
-	Monday     string
-	PrevMonday string
-	NextMonday string
+// RangePageData is the view model for the date-range view page.
+type RangePageData struct {
+	RangeLabel string
+	Start      string
+	End        string
+	PrevStart  string
+	PrevEnd    string
+	NextStart  string
+	NextEnd    string
 	Days       []DayGroup
-	WeekTotal  float64
+	RangeTotal float64
 	UserName   string
 }
 
+// Week redirects to the generic range view for the Mon–Sun week containing date.
 func (h *Handler) Week(w http.ResponseWriter, r *http.Request) {
 	dateStr := chi.URLParam(r, "date")
 	date, err := time.Parse("2006-01-02", dateStr)
@@ -172,50 +176,105 @@ func (h *Handler) Week(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "invalid date", http.StatusBadRequest)
 		return
 	}
-
 	monday := mondayOf(date)
 	sunday := monday.AddDate(0, 0, 6)
+	http.Redirect(w, r, fmt.Sprintf("/range/%s/%s",
+		monday.Format("2006-01-02"), sunday.Format("2006-01-02")),
+		http.StatusFound)
+}
+
+// Month redirects to the generic range view for the calendar month containing date.
+func (h *Handler) Month(w http.ResponseWriter, r *http.Request) {
+	dateStr := chi.URLParam(r, "date")
+	date, err := time.Parse("2006-01-02", dateStr)
+	if err != nil {
+		http.Error(w, "invalid date", http.StatusBadRequest)
+		return
+	}
+	first := firstOfMonth(date)
+	last := lastOfMonth(date)
+	http.Redirect(w, r, fmt.Sprintf("/range/%s/%s",
+		first.Format("2006-01-02"), last.Format("2006-01-02")),
+		http.StatusFound)
+}
+
+// DateRange renders any inclusive date range.
+func (h *Handler) DateRange(w http.ResponseWriter, r *http.Request) {
+	startStr := chi.URLParam(r, "start")
+	endStr := chi.URLParam(r, "end")
+
+	start, err := time.Parse("2006-01-02", startStr)
+	if err != nil {
+		http.Error(w, "invalid start date", http.StatusBadRequest)
+		return
+	}
+	end, err := time.Parse("2006-01-02", endStr)
+	if err != nil {
+		http.Error(w, "invalid end date", http.StatusBadRequest)
+		return
+	}
+	if end.Before(start) {
+		http.Error(w, "end date must not be before start date", http.StatusBadRequest)
+		return
+	}
 
 	userID := r.Context().Value(auth.CtxUserID).(string)
 	userName, _ := r.Context().Value(auth.CtxUserName).(string)
 
-	entries, err := h.DB.GetEntriesForWeek(userID, monday.Format("2006-01-02"), sunday.Format("2006-01-02"))
+	entries, err := h.DB.GetEntriesInRange(userID, startStr, endStr)
 	if err != nil {
-		log.Printf("GetEntriesForWeek error: %v", err)
+		log.Printf("GetEntriesInRange error: %v", err)
 		http.Error(w, "database error", http.StatusInternalServerError)
 		return
 	}
 
-	// Build a DayGroup for every day Mon–Sun, then fill in entries.
-	dayMap := make(map[string]*DayGroup, 7)
-	days := make([]DayGroup, 7)
-	for i := 0; i < 7; i++ {
-		d := monday.AddDate(0, 0, i)
+	numDays := int(end.Sub(start).Hours()/24) + 1
+	dayMap := make(map[string]*DayGroup, numDays)
+	days := make([]DayGroup, numDays)
+	for i := 0; i < numDays; i++ {
+		d := start.AddDate(0, 0, i)
 		ds := d.Format("2006-01-02")
 		days[i] = DayGroup{Date: ds, DateFormatted: d.Format("Monday, January 2")}
 		dayMap[ds] = &days[i]
 	}
 
-	var weekTotal float64
+	var rangeTotal float64
 	for _, e := range entries {
 		if dg, ok := dayMap[e.Date]; ok {
 			dg.Entries = append(dg.Entries, e)
 			dg.Total += e.Hours
-			weekTotal += e.Hours
+			rangeTotal += e.Hours
 		}
 	}
 
-	h.renderTemplate(w, "week.html", WeekPageData{
-		WeekLabel:  fmt.Sprintf("%s – %s", monday.Format("Jan 2"), sunday.Format("Jan 2, 2006")),
-		Monday:     monday.Format("2006-01-02"),
-		PrevMonday: monday.AddDate(0, 0, -7).Format("2006-01-02"),
-		NextMonday: monday.AddDate(0, 0, 7).Format("2006-01-02"),
+	var prevStart, prevEnd, nextStart, nextEnd time.Time
+	if isWholeMonth(start, end) {
+		prevStart = firstOfMonth(start.AddDate(0, -1, 0))
+		prevEnd = lastOfMonth(start.AddDate(0, -1, 0))
+		nextStart = firstOfMonth(start.AddDate(0, 1, 0))
+		nextEnd = lastOfMonth(start.AddDate(0, 1, 0))
+	} else {
+		prevStart = start.AddDate(0, 0, -numDays)
+		prevEnd = end.AddDate(0, 0, -numDays)
+		nextStart = start.AddDate(0, 0, numDays)
+		nextEnd = end.AddDate(0, 0, numDays)
+	}
+
+	h.renderTemplate(w, "range.html", RangePageData{
+		RangeLabel: rangeLabel(start, end),
+		Start:      startStr,
+		End:        endStr,
+		PrevStart:  prevStart.Format("2006-01-02"),
+		PrevEnd:    prevEnd.Format("2006-01-02"),
+		NextStart:  nextStart.Format("2006-01-02"),
+		NextEnd:    nextEnd.Format("2006-01-02"),
 		Days:       days,
-		WeekTotal:  weekTotal,
+		RangeTotal: rangeTotal,
 		UserName:   userName,
 	})
 }
 
+// ExportWeek redirects to the generic range export for the week containing date.
 func (h *Handler) ExportWeek(w http.ResponseWriter, r *http.Request) {
 	dateStr := r.URL.Query().Get("date")
 	if dateStr == "" {
@@ -226,25 +285,40 @@ func (h *Handler) ExportWeek(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "invalid date", http.StatusBadRequest)
 		return
 	}
-
 	monday := mondayOf(date)
 	sunday := monday.AddDate(0, 0, 6)
+	http.Redirect(w, r, fmt.Sprintf("/export/range?start=%s&end=%s",
+		monday.Format("2006-01-02"), sunday.Format("2006-01-02")),
+		http.StatusFound)
+}
+
+// ExportRange streams an Excel file for any inclusive date range.
+func (h *Handler) ExportRange(w http.ResponseWriter, r *http.Request) {
+	startStr := r.URL.Query().Get("start")
+	endStr := r.URL.Query().Get("end")
+
+	start, err := time.Parse("2006-01-02", startStr)
+	if err != nil {
+		http.Error(w, "invalid start date", http.StatusBadRequest)
+		return
+	}
+	end, err := time.Parse("2006-01-02", endStr)
+	if err != nil {
+		http.Error(w, "invalid end date", http.StatusBadRequest)
+		return
+	}
 
 	userID := r.Context().Value(auth.CtxUserID).(string)
 	userName, _ := r.Context().Value(auth.CtxUserName).(string)
 
-	entries, err := h.DB.GetEntriesForWeek(
-		userID,
-		monday.Format("2006-01-02"),
-		sunday.Format("2006-01-02"),
-	)
+	entries, err := h.DB.GetEntriesInRange(userID, startStr, endStr)
 	if err != nil {
-		log.Printf("GetEntriesForWeek (export) error: %v", err)
+		log.Printf("GetEntriesInRange (export) error: %v", err)
 		http.Error(w, "database error", http.StatusInternalServerError)
 		return
 	}
 
-	f, filename := buildExcel(entries, monday, sunday, userName)
+	f, filename := buildExcel(entries, start, end, userName)
 	w.Header().Set("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 	w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, filename))
 	if err := f.Write(w); err != nil {
@@ -261,7 +335,26 @@ func mondayOf(date time.Time) time.Time {
 	return date.AddDate(0, 0, -(weekday - 1))
 }
 
-func buildExcel(entries []db.TimeEntry, monday, sunday time.Time, userName string) (*excelize.File, string) {
+func isWholeMonth(start, end time.Time) bool {
+	return start == firstOfMonth(start) && end == lastOfMonth(start)
+}
+
+func firstOfMonth(t time.Time) time.Time {
+	return time.Date(t.Year(), t.Month(), 1, 0, 0, 0, 0, t.Location())
+}
+
+func lastOfMonth(t time.Time) time.Time {
+	return firstOfMonth(t).AddDate(0, 1, -1)
+}
+
+func rangeLabel(start, end time.Time) string {
+	if start.Year() == end.Year() {
+		return fmt.Sprintf("%s – %s", start.Format("Jan 2"), end.Format("Jan 2, 2006"))
+	}
+	return fmt.Sprintf("%s – %s", start.Format("Jan 2, 2006"), end.Format("Jan 2, 2006"))
+}
+
+func buildExcel(entries []db.TimeEntry, start, end time.Time, userName string) (*excelize.File, string) {
 	f := excelize.NewFile()
 	sheet := "Week"
 	f.NewSheet(sheet)
@@ -270,8 +363,8 @@ func buildExcel(entries []db.TimeEntry, monday, sunday time.Time, userName strin
 	bold, _ := f.NewStyle(&excelize.Style{Font: &excelize.Font{Bold: true}})
 
 	// Meta header
-	f.SetCellValue(sheet, "A1", "Week")
-	f.SetCellValue(sheet, "B1", fmt.Sprintf("%s – %s", monday.Format("Jan 2"), sunday.Format("Jan 2, 2006")))
+	f.SetCellValue(sheet, "A1", "Period")
+	f.SetCellValue(sheet, "B1", rangeLabel(start, end))
 	f.SetCellValue(sheet, "A2", "Name")
 	f.SetCellValue(sheet, "B2", userName)
 	f.SetCellStyle(sheet, "A1", "A2", bold)
@@ -285,7 +378,7 @@ func buildExcel(entries []db.TimeEntry, monday, sunday time.Time, userName strin
 	f.SetCellStyle(sheet, "A4", "E4", bold)
 
 	row := 5
-	var weekTotal float64
+	var total float64
 	prevDate := ""
 	var dateFormatted string
 
@@ -300,13 +393,13 @@ func buildExcel(entries []db.TimeEntry, monday, sunday time.Time, userName strin
 		f.SetCellValue(sheet, fmt.Sprintf("C%d", row), e.Subtask)
 		f.SetCellValue(sheet, fmt.Sprintf("D%d", row), userName)
 		f.SetCellValue(sheet, fmt.Sprintf("E%d", row), e.Hours)
-		weekTotal += e.Hours
+		total += e.Hours
 		row++
 	}
 
-	// Week total
-	f.SetCellValue(sheet, fmt.Sprintf("A%d", row), "Week total")
-	f.SetCellValue(sheet, fmt.Sprintf("E%d", row), weekTotal)
+	// Total row
+	f.SetCellValue(sheet, fmt.Sprintf("A%d", row), "Total")
+	f.SetCellValue(sheet, fmt.Sprintf("E%d", row), total)
 	f.SetCellStyle(sheet, fmt.Sprintf("A%d", row), fmt.Sprintf("E%d", row), bold)
 
 	// Column widths
@@ -317,6 +410,6 @@ func buildExcel(entries []db.TimeEntry, monday, sunday time.Time, userName strin
 	f.SetColWidth(sheet, "E", "E", 8)
 
 	safeName := strings.ReplaceAll(userName, " ", "_")
-	filename := fmt.Sprintf("%s-week-%s.xlsx", safeName, monday.Format("2006-01-02"))
+	filename := fmt.Sprintf("%s-%s-%s.xlsx", safeName, start.Format("2006-01-02"), end.Format("2006-01-02"))
 	return f, filename
 }

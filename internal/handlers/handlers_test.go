@@ -21,8 +21,8 @@ var testTmpl = func() *template.Template {
 	t := template.Must(template.New("day.html").Parse(
 		`<html><body>{{.Date}}</body></html>`,
 	))
-	template.Must(t.New("week.html").Parse(
-		`<html><body>{{.WeekLabel}}</body></html>`,
+	template.Must(t.New("range.html").Parse(
+		`<html><body>{{.RangeLabel}}</body></html>`,
 	))
 	return t
 }()
@@ -177,7 +177,56 @@ func TestWeekBadDate(t *testing.T) {
 	}
 }
 
-func TestWeekRendersOK(t *testing.T) {
+func TestWeekRedirects(t *testing.T) {
+	h := &Handler{DB: newTestDB(t), Tmpl: testTmpl}
+	req := httptest.NewRequest("GET", "/week/2024-01-15", nil)
+	req = withAuth(req, "u1", "Alice")
+	req = withChiParam(req, "date", "2024-01-15")
+	rec := httptest.NewRecorder()
+	h.Week(rec, req)
+
+	if rec.Code != http.StatusFound {
+		t.Errorf("expected 302, got %d", rec.Code)
+	}
+	// 2024-01-15 is a Monday; should redirect to that Mon–Sun range.
+	if loc := rec.Header().Get("Location"); loc != "/range/2024-01-15/2024-01-21" {
+		t.Errorf("unexpected redirect location: %q", loc)
+	}
+}
+
+func TestDateRangeBadDate(t *testing.T) {
+	h := &Handler{DB: newTestDB(t), Tmpl: testTmpl}
+	req := httptest.NewRequest("GET", "/range/bad/date", nil)
+	req = withAuth(req, "u1", "Alice")
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("start", "not-a-date")
+	rctx.URLParams.Add("end", "2024-01-21")
+	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+	rec := httptest.NewRecorder()
+	h.DateRange(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("expected 400, got %d", rec.Code)
+	}
+}
+
+func TestDateRangeStartAfterEnd(t *testing.T) {
+	h := &Handler{DB: newTestDB(t), Tmpl: testTmpl}
+	req := httptest.NewRequest("GET", "/range/2024-01-21/2024-01-15", nil)
+	req = withAuth(req, "u1", "Alice")
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("start", "2024-01-21")
+	rctx.URLParams.Add("end", "2024-01-15")
+	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+	rec := httptest.NewRecorder()
+	h.DateRange(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("expected 400, got %d", rec.Code)
+	}
+}
+
+func TestDateRangeRendersOK(t *testing.T) {
 	d := newTestDB(t)
 	must(t, d.UpsertUser(db.User{ID: "u1", Email: "a@example.com", Name: "Alice"}))
 	must(t, d.ReplaceEntriesForDay("u1", "2024-01-15", []db.TimeEntry{
@@ -185,27 +234,45 @@ func TestWeekRendersOK(t *testing.T) {
 	}))
 	h := &Handler{DB: d, Tmpl: testTmpl}
 
-	req := httptest.NewRequest("GET", "/week/2024-01-15", nil)
+	req := httptest.NewRequest("GET", "/range/2024-01-15/2024-01-21", nil)
 	req = withAuth(req, "u1", "Alice")
-	req = withChiParam(req, "date", "2024-01-15")
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("start", "2024-01-15")
+	rctx.URLParams.Add("end", "2024-01-21")
+	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 	rec := httptest.NewRecorder()
-	h.Week(rec, req)
+	h.DateRange(rec, req)
 
 	if rec.Code != http.StatusOK {
 		t.Errorf("expected 200, got %d", rec.Code)
 	}
-	// 2024-01-15 is a Monday; the week label should contain "Jan 15".
+	// Range label should contain "Jan 15".
 	if !strings.Contains(rec.Body.String(), "Jan 15") {
-		t.Errorf("expected week label in body, got: %q", rec.Body.String())
+		t.Errorf("expected range label in body, got: %q", rec.Body.String())
 	}
 }
 
-func TestExportWeekContentType(t *testing.T) {
+func TestExportWeekRedirects(t *testing.T) {
 	h := &Handler{DB: newTestDB(t), Tmpl: testTmpl}
 	req := httptest.NewRequest("GET", "/export/week?date=2024-01-15", nil)
 	req = withAuth(req, "u1", "Alice")
 	rec := httptest.NewRecorder()
 	h.ExportWeek(rec, req)
+
+	if rec.Code != http.StatusFound {
+		t.Errorf("expected 302, got %d", rec.Code)
+	}
+	if loc := rec.Header().Get("Location"); loc != "/export/range?start=2024-01-15&end=2024-01-21" {
+		t.Errorf("unexpected redirect location: %q", loc)
+	}
+}
+
+func TestExportRangeContentType(t *testing.T) {
+	h := &Handler{DB: newTestDB(t), Tmpl: testTmpl}
+	req := httptest.NewRequest("GET", "/export/range?start=2024-01-15&end=2024-01-21", nil)
+	req = withAuth(req, "u1", "Alice")
+	rec := httptest.NewRecorder()
+	h.ExportRange(rec, req)
 
 	if rec.Code != http.StatusOK {
 		t.Errorf("expected 200, got %d", rec.Code)
@@ -225,7 +292,7 @@ func TestBuildExcel(t *testing.T) {
 
 	f, filename := buildExcel(entries, monday, sunday, "Alice Smith")
 
-	if filename != "Alice_Smith-week-2024-01-15.xlsx" {
+	if filename != "Alice_Smith-2024-01-15-2024-01-21.xlsx" {
 		t.Errorf("unexpected filename: %q", filename)
 	}
 

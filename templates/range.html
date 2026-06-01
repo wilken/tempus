@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Tempus fugit — {{.RangeLabel}}</title>
+        <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
+        <link rel="stylesheet" href="/static/style.css" />
+    </head>
+    <body>
+        {{template "header" .}}
+
+        <div class="page-nav">
+            <a class="nav-btn" href="/range/{{.PrevStart}}/{{.PrevEnd}}">&#8592; Previous</a>
+            <h2>{{.RangeLabel}}</h2>
+            <a class="nav-btn" href="/range/{{.NextStart}}/{{.NextEnd}}">Next &#8594;</a>
+        </div>
+
+        <div class="container">
+            <div class="card">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Task</th>
+                            <th>Subtask</th>
+                            <th class="col-hours">Hours</th>
+                        </tr>
+                    </thead>
+                        {{range .Days}}{{if .Entries}}{{$day := .}}
+                    <tbody>
+                        <tr class="link">
+                            <td colspan="3">
+                                <a href="/day/{{$day.Date}}"
+                                    >{{$day.DateFormatted}}</a
+                                >
+                            </td>
+                        </tr>
+                        {{range .Entries}}
+                        <tr>
+                            <td>{{.Task}}</td>
+                            <td class="muted">{{.Subtask}}</td>
+                            <td class="col-hours">{{printf "%.2f" .Hours}}</td>
+                        </tr>
+                        {{end}}
+                        <tr class="total">
+                            <td>Daily total</td>
+                            <td></td>
+                            <td class="col-hours">
+                                {{printf "%.2f" $day.Total}}
+                            </td>
+                        </tr>
+                    </tbody>
+                        {{end}}{{end}}
+                    <tfoot>
+                        <tr class="total">
+                            <td colspan="2">Total</td>
+                            <td class="col-hours">
+                                {{printf "%.2f" .RangeTotal}}
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <div class="actions">
+                <a class="btn-export" href="/day"
+                    >&#128197; Go to today</a
+                >
+                <a class="btn-export" href="/export/range?start={{.Start}}&end={{.End}}"
+                    >&#8659; Export to Excel</a
+                >
+            </div>
+        </div>
+    </body>
+</html>

@@ -205,6 +205,10 @@ header h1 {
 .btn-export:hover {
     text-decoration: underline;
 }
+.actions-group {
+    display: flex;
+    gap: 16px;
+}
 
 /* ─── Table (shared) ──────────────────────────────────────── */
 table {
