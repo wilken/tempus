@@ -23,6 +23,10 @@ type Handler struct {
 	Tmpl *template.Template
 }
 
+// maxRangeDays is the largest date range accepted by DateRange and ExportRange.
+// Prevents oversized allocations and runaway Excel generation.
+const maxRangeDays = 366
+
 func (h *Handler) renderTemplate(w http.ResponseWriter, name string, data interface{}) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	if err := h.Tmpl.ExecuteTemplate(w, name, data); err != nil {
@@ -220,6 +224,10 @@ func (h *Handler) DateRange(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "end date must not be before start date", http.StatusBadRequest)
 		return
 	}
+	if end.Sub(start).Hours()/24 > maxRangeDays {
+		http.Error(w, "date range too large", http.StatusBadRequest)
+		return
+	}
 
 	userID := r.Context().Value(auth.CtxUserID).(string)
 	userName, _ := r.Context().Value(auth.CtxUserName).(string)
@@ -308,6 +316,14 @@ func (h *Handler) ExportRange(w http.ResponseWriter, r *http.Request) {
 	end, err := time.Parse("2006-01-02", endStr)
 	if err != nil {
 		http.Error(w, "invalid end date", http.StatusBadRequest)
+		return
+	}
+	if end.Before(start) {
+		http.Error(w, "end date must not be before start date", http.StatusBadRequest)
+		return
+	}
+	if end.Sub(start).Hours()/24 > maxRangeDays {
+		http.Error(w, "date range too large", http.StatusBadRequest)
 		return
 	}
 
@@ -412,7 +428,17 @@ func buildExcel(entries []db.TimeEntry, start, end time.Time, userName string) (
 	f.SetColWidth(sheet, "D", "D", 20)
 	f.SetColWidth(sheet, "E", "E", 8)
 
-	safeName := strings.ReplaceAll(userName, " ", "_")
+	safeName := strings.Map(func(r rune) rune {
+		// Strip characters that could inject into a Content-Disposition header
+		// or cause issues in common filesystems.
+		if r == '"' || r == '\\' || r == '\r' || r == '\n' || r == '/' || r == ':' {
+			return '_'
+		}
+		if r == ' ' {
+			return '_'
+		}
+		return r
+	}, userName)
 	filename := fmt.Sprintf("%s-%s-%s.xlsx", safeName, start.Format("2006-01-02"), end.Format("2006-01-02"))
 	return f, filename
 }

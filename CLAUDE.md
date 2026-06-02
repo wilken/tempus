@@ -64,7 +64,7 @@ Generic read-only view for any inclusive date range. Renders the same table (Tas
 
 ## Range export (`/export/range?start=…&end=…`)
 
-Columns: Date | Task | Subtask | Name | Hours. Grouped by day with a "Total" row at the bottom. File name: `{username}-{start}-{end}.xlsx` (spaces in username replaced with `_`). `/export/week?date=…` redirects to this endpoint.
+Columns: Date | Task | Subtask | Name | Hours. Grouped by day with a "Total" row at the bottom. File name: `{username}-{start}-{end}.xlsx` (spaces and unsafe characters in username replaced with `_`). `/export/week?date=…` redirects to this endpoint.
 
 ## Security
 
@@ -72,6 +72,8 @@ Columns: Date | Task | Subtask | Name | Hours. Grouped by day with a "Total" row
 - Session cookie is `Secure` (HTTPS only) and `HttpOnly`. Local HTTP dev requires unsetting `Secure` or using a TLS proxy.
 - `securityHeaders` middleware in `cmd/main.go` sets HSTS, CSP, X-Frame-Options, X-Content-Type-Options, and Referrer-Policy on every response.
 - `json.Marshal` is used deliberately in the Day handler for autocomplete data — it escapes `<`, `>`, `&` as unicode escapes, which is required for safe injection into `<script>` blocks via `template.JS`. Do not replace it with an encoder that skips this escaping.
+- `maxRangeDays = 366` caps date ranges in `DateRange` and `ExportRange` to prevent oversized allocations and runaway Excel generation.
+- Usernames in Excel filenames are sanitised with `strings.Map` to strip characters that could inject into `Content-Disposition` headers (`"`, `\`, `\r`, `\n`, `/`, `:`).
 
 ## Docker
 
