@@ -8,8 +8,8 @@ A simple time registration app built with Go, SQLite, and plain HTML.
 - Previous / Next day navigation
 - Google sign-in (your name is pulled from your Google account)
 - Auto-save when tabbing out of a field or deleting a row
-- Weekly read-only summary view
-- Export a full week to an Excel file (.xlsx)
+- Week and month read-only summary views, plus any custom date range
+- Export any date range to an Excel file (.xlsx)
 
 ## Requirements
 
@@ -67,7 +67,7 @@ docker compose restart app
 | `GOOGLE_CLIENT_ID`    | —                                      | ✅       |
 | `GOOGLE_CLIENT_SECRET`| —                                      | ✅       |
 | `GOOGLE_REDIRECT_URL` | `http://localhost:8080/auth/callback`  |          |
-| `SESSION_SECRET`      | `dev-secret-change-in-production`      |          |
+| `SESSION_SECRET`      | —                                      | ✅       |
 | `DATABASE_PATH`       | `tempus.db`                            |          |
 | `PORT`                | `8080`                                 |          |
 
