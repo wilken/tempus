@@ -82,13 +82,15 @@ func TestGetRecentTasks(t *testing.T) {
 
 	date := time.Date(2024, 1, 15, 0, 0, 0, 0, time.UTC)
 
-	// 11 days before date — outside the 10-day window, should be excluded.
-	must(t, d.ReplaceEntriesForDay("u1", "2024-01-04", []TimeEntry{
-		{UserID: "u1", Date: "2024-01-04", Task: "Too Old", Hours: 1},
+	// One day outside the autocompleteDays window — should be excluded.
+	tooOld := date.AddDate(0, 0, -(autocompleteDays + 1)).Format("2006-01-02")
+	must(t, d.ReplaceEntriesForDay("u1", tooOld, []TimeEntry{
+		{UserID: "u1", Date: tooOld, Task: "Too Old", Hours: 1},
 	}))
-	// 5 days before date — within the window, should be included.
-	must(t, d.ReplaceEntriesForDay("u1", "2024-01-10", []TimeEntry{
-		{UserID: "u1", Date: "2024-01-10", Task: "Recent Task", Hours: 1},
+	// One day inside the autocompleteDays window — should be included.
+	recent := date.AddDate(0, 0, -(autocompleteDays - 1)).Format("2006-01-02")
+	must(t, d.ReplaceEntriesForDay("u1", recent, []TimeEntry{
+		{UserID: "u1", Date: recent, Task: "Recent Task", Hours: 1},
 	}))
 	// 1 day after date — future, should be excluded.
 	must(t, d.ReplaceEntriesForDay("u1", "2024-01-16", []TimeEntry{

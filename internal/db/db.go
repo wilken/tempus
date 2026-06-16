@@ -10,7 +10,7 @@ import (
 
 // autocompleteDays is the number of days before the viewed date to include in
 // task and subtask autocomplete suggestions.
-const autocompleteDays = 10
+const autocompleteDays = 20
 
 // DB wraps the sql.DB connection.
 type DB struct {
